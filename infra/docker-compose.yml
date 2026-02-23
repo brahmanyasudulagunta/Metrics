@@ -42,7 +42,6 @@ services:
     image: backend-metrics:v1
     container_name: backend-metrics
     volumes:
-      - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     env_file:
       - ../backend/.env

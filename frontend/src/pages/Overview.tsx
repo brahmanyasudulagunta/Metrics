@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Card, CardContent, Box, CircularProgress, Alert, Paper, Chip } from '@mui/material';
+import { Typography, Box, CircularProgress, Alert, Divider } from '@mui/material';
 import MemoryIcon from '@mui/icons-material/Memory';
 import StorageIcon from '@mui/icons-material/Storage';
 import DiscFullIcon from '@mui/icons-material/DiscFull';
@@ -7,11 +7,11 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SpeedIcon from '@mui/icons-material/Speed';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import axios from 'axios';
 import API_URL from '../config';
 import MetricCharts from '../components/MetricCharts';
 
-// Interfaces and common config duplicated temporarily until generalized hook/context
 interface MetricData { time: string; value: number; }
 interface SystemInfo {
     uptime: string; load1: number; load5: number; load15: number;
@@ -27,9 +27,15 @@ const THRESHOLDS = {
 };
 
 const getStatusColor = (value: number, thresholds = { warning: 60, critical: 80 }) => {
-    if (value >= thresholds.critical) return { color: '#f44336', label: 'Critical' };
-    if (value >= thresholds.warning) return { color: '#ff9800', label: 'Warning' };
-    return { color: '#4caf50', label: 'Healthy' };
+    if (value >= thresholds.critical) return '#f44336';
+    if (value >= thresholds.warning) return '#ff9800';
+    return '#4caf50';
+};
+
+const getOverallStatus = (cpu: number, mem: number, disk: number) => {
+    if (cpu >= 80 || mem >= 85 || disk >= 90) return { color: '#f44336', label: 'Degraded Performance' };
+    if (cpu >= 60 || mem >= 70 || disk >= 75) return { color: '#ff9800', label: 'Elevated Usage' };
+    return { color: '#4caf50', label: 'All Systems Operational' };
 };
 
 const Overview: React.FC = () => {
@@ -43,10 +49,11 @@ const Overview: React.FC = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     const getTimeRangeParams = () => {
         const end = Math.floor(Date.now() / 1000);
-        const start = end - 3600; // Fixed 1 hour window
+        const start = end - 3600;
         return { start, end, step: '15s' };
     };
 
@@ -78,6 +85,7 @@ const Overview: React.FC = () => {
                 processesRunning: procRes.data.running, processesBlocked: procRes.data.blocked,
                 temperature: tempRes.data,
             });
+            setLastUpdated(new Date());
         } catch (err) {
             setError('Failed to fetch Overview metrics.');
         } finally {
@@ -87,16 +95,29 @@ const Overview: React.FC = () => {
 
     useEffect(() => {
         fetchMetrics();
-        // Auto-refresh interval (Grafana style)
         const interval = setInterval(fetchMetrics, 15000);
         return () => clearInterval(interval);
     }, []);
 
     const getCurrentValue = (data: MetricData[]) => data.length > 0 ? data[data.length - 1].value : 0;
 
-    const cpuStatus = getStatusColor(getCurrentValue(cpuData), THRESHOLDS.cpu);
-    const memStatus = getStatusColor(getCurrentValue(memData), THRESHOLDS.memory);
-    const diskStatus = getStatusColor(getCurrentValue(diskData), THRESHOLDS.disk);
+    const cpuVal = getCurrentValue(cpuData);
+    const memVal = getCurrentValue(memData);
+    const diskVal = getCurrentValue(diskData);
+    const overallStatus = getOverallStatus(cpuVal, memVal, diskVal);
+
+    const timeSinceUpdate = () => {
+        const seconds = Math.floor((Date.now() - lastUpdated.getTime()) / 1000);
+        if (seconds < 5) return 'just now';
+        if (seconds < 60) return `${seconds}s ago`;
+        return `${Math.floor(seconds / 60)}m ago`;
+    };
+
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const t = setInterval(() => setTick(p => p + 1), 1000);
+        return () => clearInterval(t);
+    }, []);
 
     if (loading && cpuData.length === 0) {
         return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
@@ -104,93 +125,136 @@ const Overview: React.FC = () => {
 
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>System Overview</Typography>
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-            <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid', borderColor: 'divider' }}>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    <Card sx={{ flex: '1 1 180px', bgcolor: 'transparent', boxShadow: 'none' }}>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><AccessTimeIcon fontSize="small" color="primary" /> Uptime</Typography>
-                            <Typography variant="h5" sx={{ mt: 1 }}>{systemInfo.uptime}</Typography>
-                        </CardContent>
-                    </Card>
-                    <Card sx={{ flex: '1 1 180px', bgcolor: 'transparent', boxShadow: 'none' }}>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><SpeedIcon fontSize="small" sx={{ color: '#5794f2' }} /> Load Average</Typography>
-                            <Typography variant="h5" sx={{ mt: 1 }}>{systemInfo.load1} / {systemInfo.load5} / {systemInfo.load15}</Typography>
-                            <Typography variant="caption" color="textSecondary">1 / 5 / 15 min</Typography>
-                        </CardContent>
-                    </Card>
-                    <Card sx={{ flex: '1 1 180px', bgcolor: 'transparent', boxShadow: 'none' }}>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><SettingsIcon fontSize="small" sx={{ color: '#ff9830' }} /> Processes</Typography>
-                            <Typography variant="h5" sx={{ mt: 1 }}>{systemInfo.processesRunning} <Typography component="span" variant="body2" color="textSecondary">running</Typography></Typography>
-                            <Typography variant="caption" color="textSecondary">{systemInfo.processesBlocked} blocked</Typography>
-                        </CardContent>
-                    </Card>
-                    <Card sx={{ flex: '1 1 180px', bgcolor: 'transparent', boxShadow: 'none' }}>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><StorageIcon fontSize="small" sx={{ color: '#73bf69' }} /> Containers</Typography>
-                            <Typography variant="h5" sx={{ mt: 1 }}>{containers.length} <Typography component="span" variant="body2" color="textSecondary">running</Typography></Typography>
-                        </CardContent>
-                    </Card>
-                    <Card sx={{ flex: '1 1 180px', bgcolor: 'transparent', boxShadow: 'none', borderLeft: systemInfo.temperature.available ? (systemInfo.temperature.value > 80 ? '2px solid #f44336' : '2px solid #4caf50') : 'none' }}>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><ThermostatIcon fontSize="small" /> Temperature</Typography>
-                            <Typography variant="h5" sx={{ mt: 1 }}>
-                                {systemInfo.temperature.available ? `${systemInfo.temperature.value}°C` : 'N/A'}
-                            </Typography>
-                            <Typography variant="caption" color={systemInfo.temperature.available ? (systemInfo.temperature.value > 80 ? 'error' : 'textSecondary') : 'textSecondary'}>
-                                {systemInfo.temperature.status}
-                            </Typography>
-                        </CardContent>
-                    </Card>
+            {/* Status Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <FiberManualRecordIcon sx={{ fontSize: 12, color: overallStatus.color }} />
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        {overallStatus.label}
+                    </Typography>
                 </Box>
-            </Paper>
-
-            {/* Metric Cards summary */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-                <Card sx={{ flex: '1 1 200px', borderTop: `3px solid ${cpuStatus.color}`, borderRadius: 1 }}>
-                    <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><MemoryIcon fontSize="small" /> CPU Usage</Typography>
-                            <Chip label={cpuStatus.label} size="small" sx={{ bgcolor: cpuStatus.color, color: 'white', fontWeight: 'bold', height: 20, fontSize: '0.7rem' }} />
-                        </Box>
-                        <Typography variant="h4" sx={{ fontWeight: 500 }}>{getCurrentValue(cpuData).toFixed(1)}%</Typography>
-                    </CardContent>
-                </Card>
-                <Card sx={{ flex: '1 1 200px', borderTop: `3px solid ${memStatus.color}`, borderRadius: 1 }}>
-                    <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><StorageIcon fontSize="small" /> Memory Usage</Typography>
-                            <Chip label={memStatus.label} size="small" sx={{ bgcolor: memStatus.color, color: 'white', fontWeight: 'bold', height: 20, fontSize: '0.7rem' }} />
-                        </Box>
-                        <Typography variant="h4" sx={{ fontWeight: 500 }}>{getCurrentValue(memData).toFixed(1)}%</Typography>
-                    </CardContent>
-                </Card>
-                <Card sx={{ flex: '1 1 200px', borderTop: `3px solid ${diskStatus.color}`, borderRadius: 1 }}>
-                    <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography color="textSecondary" variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><DiscFullIcon fontSize="small" /> Disk Usage</Typography>
-                            <Chip label={diskStatus.label} size="small" sx={{ bgcolor: diskStatus.color, color: 'white', fontWeight: 'bold', height: 20, fontSize: '0.7rem' }} />
-                        </Box>
-                        <Typography variant="h4" sx={{ fontWeight: 500 }}>{getCurrentValue(diskData).toFixed(1)}%</Typography>
-                    </CardContent>
-                </Card>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                    Updated {timeSinceUpdate()}
+                </Typography>
             </Box>
 
-            {/* Render System charts from MetricCharts component passing tabValue 0 to reuse the layout */}
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {/* System Info Row — flat with subtle dividers */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0, mb: 4, flexWrap: 'wrap' }}>
+                <StatItem
+                    icon={<AccessTimeIcon sx={{ fontSize: 16, color: '#5794f2' }} />}
+                    label="Uptime"
+                    value={systemInfo.uptime}
+                />
+                <Divider orientation="vertical" flexItem sx={{ mx: 3, borderColor: 'rgba(255,255,255,0.06)' }} />
+                <StatItem
+                    icon={<SpeedIcon sx={{ fontSize: 16, color: '#5794f2' }} />}
+                    label="Load Average"
+                    value={`${systemInfo.load1} / ${systemInfo.load5} / ${systemInfo.load15}`}
+                    sublabel="1 / 5 / 15 min"
+                />
+                <Divider orientation="vertical" flexItem sx={{ mx: 3, borderColor: 'rgba(255,255,255,0.06)' }} />
+                <StatItem
+                    icon={<SettingsIcon sx={{ fontSize: 16, color: '#ff9830' }} />}
+                    label="Processes"
+                    value={`${systemInfo.processesRunning}`}
+                    sublabel={`${systemInfo.processesBlocked} blocked`}
+                    suffix="running"
+                />
+                <Divider orientation="vertical" flexItem sx={{ mx: 3, borderColor: 'rgba(255,255,255,0.06)' }} />
+                <StatItem
+                    icon={<StorageIcon sx={{ fontSize: 16, color: '#73bf69' }} />}
+                    label="Containers"
+                    value={`${containers.length}`}
+                    suffix="running"
+                />
+                <Divider orientation="vertical" flexItem sx={{ mx: 3, borderColor: 'rgba(255,255,255,0.06)' }} />
+                <StatItem
+                    icon={<ThermostatIcon sx={{ fontSize: 16, color: systemInfo.temperature.available ? (systemInfo.temperature.value > 80 ? '#f44336' : '#8b949e') : '#8b949e' }} />}
+                    label="Temperature"
+                    value={systemInfo.temperature.available ? `${systemInfo.temperature.value}°C` : 'N/A'}
+                    sublabel={systemInfo.temperature.status}
+                />
+            </Box>
+
+            {/* Metric values — large bold numbers, no borders, no badges */}
+            <Box sx={{ display: 'flex', gap: 6, mb: 4, flexWrap: 'wrap' }}>
+                <MetricValue
+                    icon={<MemoryIcon sx={{ fontSize: 16, color: '#8b949e' }} />}
+                    label="CPU"
+                    value={cpuVal}
+                    color={getStatusColor(cpuVal, THRESHOLDS.cpu)}
+                />
+                <MetricValue
+                    icon={<StorageIcon sx={{ fontSize: 16, color: '#8b949e' }} />}
+                    label="Memory"
+                    value={memVal}
+                    color={getStatusColor(memVal, THRESHOLDS.memory)}
+                />
+                <MetricValue
+                    icon={<DiscFullIcon sx={{ fontSize: 16, color: '#8b949e' }} />}
+                    label="Disk"
+                    value={diskVal}
+                    color={getStatusColor(diskVal, THRESHOLDS.disk)}
+                />
+            </Box>
+
+            <Divider sx={{ mb: 4, borderColor: 'rgba(255,255,255,0.06)' }} />
+
+            {/* Charts */}
             <MetricCharts
                 cpuData={cpuData}
                 memData={memData}
                 diskData={diskData}
-                rxData={[]} txData={[]} // Unused in System tab
+                rxData={[]} txData={[]}
                 thresholds={THRESHOLDS}
-                tabValue={0} // System
+                tabValue={0}
             />
         </Box>
     );
 };
+
+/* ── Inline Sub-Components ── */
+
+const StatItem: React.FC<{ icon: React.ReactNode; label: string; value: string; sublabel?: string; suffix?: string }> = ({ icon, label, value, sublabel, suffix }) => (
+    <Box sx={{ minWidth: 100 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            {icon}
+            <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {label}
+            </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: '1.25rem', lineHeight: 1.2 }}>
+                {value}
+            </Typography>
+            {suffix && (
+                <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                    {suffix}
+                </Typography>
+            )}
+        </Box>
+        {sublabel && (
+            <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', mt: 0.25 }}>
+                {sublabel}
+            </Typography>
+        )}
+    </Box>
+);
+
+const MetricValue: React.FC<{ icon: React.ReactNode; label: string; value: number; color: string }> = ({ icon, label, value, color }) => (
+    <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            {icon}
+            <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {label}
+            </Typography>
+        </Box>
+        <Typography sx={{ fontWeight: 700, fontSize: '2rem', color, lineHeight: 1.1 }}>
+            {value.toFixed(1)}%
+        </Typography>
+    </Box>
+);
 
 export default Overview;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Box, CircularProgress, Alert, Card, CardContent } from '@mui/material';
-import WifiIcon from '@mui/icons-material/Wifi';
+import { Typography, Box, CircularProgress, Alert, Divider } from '@mui/material';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import axios from 'axios';
 import API_URL from '../config';
 import MetricCharts from '../components/MetricCharts';
@@ -15,7 +16,7 @@ const Network: React.FC = () => {
 
     const getTimeRangeParams = () => {
         const end = Math.floor(Date.now() / 1000);
-        const start = end - 3600; // 1 hour
+        const start = end - 3600;
         return { start, end, step: '15s' };
     };
 
@@ -63,30 +64,47 @@ const Network: React.FC = () => {
 
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>Network Metrics</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Network</Typography>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
-                <Card sx={{ flex: '1 1 200px', borderTop: '3px solid #ff7300' }}>
-                    <CardContent>
-                        <Typography color="textSecondary" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><WifiIcon fontSize="small" /> Current RX</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 500 }}>{formatBytes(getCurrentValue(rxData))}</Typography>
-                    </CardContent>
-                </Card>
-                <Card sx={{ flex: '1 1 200px', borderTop: '3px solid #00c853' }}>
-                    <CardContent>
-                        <Typography color="textSecondary" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><WifiIcon fontSize="small" /> Current TX</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 500 }}>{formatBytes(getCurrentValue(txData))}</Typography>
-                    </CardContent>
-                </Card>
+            {/* Current throughput — flat, bold, no borders */}
+            <Box sx={{ display: 'flex', gap: 6, mb: 4 }}>
+                <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                        <ArrowDownwardIcon sx={{ fontSize: 16, color: '#8b949e' }} />
+                        <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Receive
+                        </Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '2rem', color: '#00ced1', lineHeight: 1.1 }}>
+                        {formatBytes(getCurrentValue(rxData))}
+                    </Typography>
+                </Box>
+
+                <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+
+                <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                        <ArrowUpwardIcon sx={{ fontSize: 16, color: '#8b949e' }} />
+                        <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Transmit
+                        </Typography>
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '2rem', color: '#8a2be2', lineHeight: 1.1 }}>
+                        {formatBytes(getCurrentValue(txData))}
+                    </Typography>
+                </Box>
             </Box>
 
+            <Divider sx={{ mb: 4, borderColor: 'rgba(255,255,255,0.06)' }} />
+
+            {/* Charts */}
             <MetricCharts
-                cpuData={[]} memData={[]} diskData={[]} // unused
+                cpuData={[]} memData={[]} diskData={[]}
                 rxData={rxData}
                 txData={txData}
                 thresholds={{ cpu: { warning: 0, critical: 0 }, memory: { warning: 0, critical: 0 }, disk: { warning: 0, critical: 0 } }}
-                tabValue={1} // Network
+                tabValue={1}
             />
         </Box>
     );

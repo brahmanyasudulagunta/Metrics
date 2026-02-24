@@ -38,12 +38,12 @@ const formatBytes = (bytes: number): string => {
 const PercentageTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <Paper sx={{ p: 1.5, bgcolor: '#181b1f', border: '1px solid #2c3235' }}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>{label}</Typography>
+            <Paper sx={{ p: 1.5, bgcolor: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 600, fontSize: '0.75rem', color: '#8b949e' }}>{label}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: payload[0].color || payload[0].stroke, mr: 1 }} />
-                    <Typography variant="body2" fontWeight="bold">
-                        {payload[0].name}: {payload[0].value.toFixed(2)}%
+                    <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.85rem' }}>
+                        {payload[0].value.toFixed(2)}%
                     </Typography>
                 </Box>
             </Paper>
@@ -55,12 +55,12 @@ const PercentageTooltip = ({ active, payload, label }: any) => {
 const NetworkTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <Paper sx={{ p: 1.5, bgcolor: '#181b1f', border: '1px solid #2c3235' }}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>{label}</Typography>
+            <Paper sx={{ p: 1.5, bgcolor: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 600, fontSize: '0.75rem', color: '#8b949e' }}>{label}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: payload[0].color || payload[0].stroke, mr: 1 }} />
-                    <Typography variant="body2" fontWeight="bold">
-                        {payload[0].name}: {formatBytes(payload[0].value)}
+                    <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.85rem' }}>
+                        {formatBytes(payload[0].value)}
                     </Typography>
                 </Box>
             </Paper>
@@ -79,6 +79,15 @@ const formatNetworkTick = (value: number) => {
     return `${(value / (k * k)).toFixed(1)}M`;
 };
 
+const ChartPanel: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <Box sx={{ flex: '1 1 48%', minWidth: 320 }}>
+        <Typography sx={{ fontSize: '0.8rem', fontWeight: 500, color: 'text.secondary', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {title}
+        </Typography>
+        {children}
+    </Box>
+);
+
 const MetricCharts: React.FC<MetricChartsProps> = ({
     cpuData,
     memData,
@@ -89,115 +98,110 @@ const MetricCharts: React.FC<MetricChartsProps> = ({
     tabValue,
 }) => {
     return (
-        <Box sx={{ mt: 2 }}>
+        <Box>
             {tabValue === 0 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                    <Box sx={{ flex: '1 1 45%', minWidth: 300 }}>
-                        <Typography variant="h6" gutterBottom>CPU Usage (%)</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={cpuData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    <ChartPanel title="CPU Usage">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <AreaChart data={cpuData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#5794f2" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#5794f2" stopOpacity={0.25} />
                                         <stop offset="95%" stopColor="#5794f2" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2c3235" vertical={false} />
-                                <XAxis dataKey="time" stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <YAxis tickFormatter={formatPercent} domain={[0, 100]} stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <Tooltip content={<PercentageTooltip />} cursor={{ stroke: '#5c6370', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                                <Legend wrapperStyle={{ paddingTop: 10 }} />
-                                {thresholds.cpu.warning > 0 && <ReferenceLine y={thresholds.cpu.warning} stroke="#ff9800" strokeDasharray="5 5" label={{ position: 'insideTopLeft', value: 'Warn', fill: '#ff9800', fontSize: 12 }} />}
-                                {thresholds.cpu.critical > 0 && <ReferenceLine y={thresholds.cpu.critical} stroke="#f44336" strokeDasharray="5 5" label={{ position: 'insideTopLeft', value: 'Crit', fill: '#f44336', fontSize: 12 }} />}
-                                <Area type="monotone" dataKey="value" name="CPU" stroke="#5794f2" strokeWidth={2} fillOpacity={1} fill="url(#colorCpu)" activeDot={{ r: 6, strokeWidth: 0 }} isAnimationActive={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                <XAxis dataKey="time" stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <YAxis tickFormatter={formatPercent} domain={[0, 100]} stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <Tooltip content={<PercentageTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
+                                <Legend wrapperStyle={{ paddingTop: 10, fontSize: '0.75rem' }} />
+                                {thresholds.cpu.warning > 0 && <ReferenceLine y={thresholds.cpu.warning} stroke="rgba(255,152,0,0.3)" strokeDasharray="5 5" />}
+                                {thresholds.cpu.critical > 0 && <ReferenceLine y={thresholds.cpu.critical} stroke="rgba(244,67,54,0.3)" strokeDasharray="5 5" />}
+                                <Area type="monotone" dataKey="value" name="CPU" stroke="#5794f2" strokeWidth={1.5} fillOpacity={1} fill="url(#colorCpu)" activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </Box>
-                    <Box sx={{ flex: '1 1 45%', minWidth: 300 }}>
-                        <Typography variant="h6" gutterBottom>Memory Usage (%)</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={memData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    </ChartPanel>
+                    <ChartPanel title="Memory Usage">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <AreaChart data={memData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorMem" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#73bf69" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#73bf69" stopOpacity={0.25} />
                                         <stop offset="95%" stopColor="#73bf69" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2c3235" vertical={false} />
-                                <XAxis dataKey="time" stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <YAxis tickFormatter={formatPercent} domain={[0, 100]} stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <Tooltip content={<PercentageTooltip />} cursor={{ stroke: '#5c6370', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                                <Legend wrapperStyle={{ paddingTop: 10 }} />
-                                {thresholds.memory.warning > 0 && <ReferenceLine y={thresholds.memory.warning} stroke="#ff9800" strokeDasharray="5 5" label={{ position: 'insideTopLeft', value: 'Warn', fill: '#ff9800', fontSize: 12 }} />}
-                                {thresholds.memory.critical > 0 && <ReferenceLine y={thresholds.memory.critical} stroke="#f44336" strokeDasharray="5 5" label={{ position: 'insideTopLeft', value: 'Crit', fill: '#f44336', fontSize: 12 }} />}
-                                <Area type="monotone" dataKey="value" name="Memory" stroke="#73bf69" strokeWidth={2} fillOpacity={1} fill="url(#colorMem)" activeDot={{ r: 6, strokeWidth: 0 }} isAnimationActive={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                <XAxis dataKey="time" stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <YAxis tickFormatter={formatPercent} domain={[0, 100]} stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <Tooltip content={<PercentageTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
+                                <Legend wrapperStyle={{ paddingTop: 10, fontSize: '0.75rem' }} />
+                                {thresholds.memory.warning > 0 && <ReferenceLine y={thresholds.memory.warning} stroke="rgba(255,152,0,0.3)" strokeDasharray="5 5" />}
+                                {thresholds.memory.critical > 0 && <ReferenceLine y={thresholds.memory.critical} stroke="rgba(244,67,54,0.3)" strokeDasharray="5 5" />}
+                                <Area type="monotone" dataKey="value" name="Memory" stroke="#73bf69" strokeWidth={1.5} fillOpacity={1} fill="url(#colorMem)" activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </Box>
-                    <Box sx={{ flex: '1 1 100%', minWidth: 300 }}>
-                        <Typography variant="h6" gutterBottom>Disk Usage (%)</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={diskData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    </ChartPanel>
+                    <ChartPanel title="Disk Usage">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <AreaChart data={diskData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorDisk" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ff9830" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#ff9830" stopOpacity={0.25} />
                                         <stop offset="95%" stopColor="#ff9830" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2c3235" vertical={false} />
-                                <XAxis dataKey="time" stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <YAxis tickFormatter={formatPercent} domain={[0, 100]} stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <Tooltip content={<PercentageTooltip />} cursor={{ stroke: '#5c6370', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                                <Legend wrapperStyle={{ paddingTop: 10 }} />
-                                {thresholds.disk.warning > 0 && <ReferenceLine y={thresholds.disk.warning} stroke="#ff9800" strokeDasharray="5 5" label={{ position: 'insideTopLeft', value: 'Warn', fill: '#ff9800', fontSize: 12 }} />}
-                                {thresholds.disk.critical > 0 && <ReferenceLine y={thresholds.disk.critical} stroke="#f44336" strokeDasharray="5 5" label={{ position: 'insideTopLeft', value: 'Crit', fill: '#f44336', fontSize: 12 }} />}
-                                <Area type="monotone" dataKey="value" name="Disk" stroke="#ff9830" strokeWidth={2} fillOpacity={1} fill="url(#colorDisk)" activeDot={{ r: 6, strokeWidth: 0 }} isAnimationActive={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                <XAxis dataKey="time" stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <YAxis tickFormatter={formatPercent} domain={[0, 100]} stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <Tooltip content={<PercentageTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
+                                <Legend wrapperStyle={{ paddingTop: 10, fontSize: '0.75rem' }} />
+                                {thresholds.disk.warning > 0 && <ReferenceLine y={thresholds.disk.warning} stroke="rgba(255,152,0,0.3)" strokeDasharray="5 5" />}
+                                {thresholds.disk.critical > 0 && <ReferenceLine y={thresholds.disk.critical} stroke="rgba(244,67,54,0.3)" strokeDasharray="5 5" />}
+                                <Area type="monotone" dataKey="value" name="Disk" stroke="#ff9830" strokeWidth={1.5} fillOpacity={1} fill="url(#colorDisk)" activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </Box>
+                    </ChartPanel>
                 </Box>
             )}
 
             {tabValue === 1 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                    <Box sx={{ flex: '1 1 45%', minWidth: 300 }}>
-                        <Typography variant="h6" gutterBottom>Network Receive (Throughput)</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={rxData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    <ChartPanel title="Network Receive">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <AreaChart data={rxData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRx" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#00ced1" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#00ced1" stopOpacity={0.25} />
                                         <stop offset="95%" stopColor="#00ced1" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2c3235" vertical={false} />
-                                <XAxis dataKey="time" stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <YAxis tickFormatter={formatNetworkTick} stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <Tooltip content={<NetworkTooltip />} cursor={{ stroke: '#5c6370', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                                <Legend wrapperStyle={{ paddingTop: 10 }} />
-                                <Area type="monotone" dataKey="value" name="RX" stroke="#00ced1" strokeWidth={2} fillOpacity={1} fill="url(#colorRx)" activeDot={{ r: 6, strokeWidth: 0 }} isAnimationActive={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                <XAxis dataKey="time" stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <YAxis tickFormatter={formatNetworkTick} stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <Tooltip content={<NetworkTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
+                                <Legend wrapperStyle={{ paddingTop: 10, fontSize: '0.75rem' }} />
+                                <Area type="monotone" dataKey="value" name="RX" stroke="#00ced1" strokeWidth={1.5} fillOpacity={1} fill="url(#colorRx)" activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </Box>
-                    <Box sx={{ flex: '1 1 45%', minWidth: 300 }}>
-                        <Typography variant="h6" gutterBottom>Network Transmit (Throughput)</Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={txData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    </ChartPanel>
+                    <ChartPanel title="Network Transmit">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <AreaChart data={txData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8a2be2" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#8a2be2" stopOpacity={0.25} />
                                         <stop offset="95%" stopColor="#8a2be2" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2c3235" vertical={false} />
-                                <XAxis dataKey="time" stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <YAxis tickFormatter={formatNetworkTick} stroke="#8e9297" tick={{ fill: '#8e9297' }} />
-                                <Tooltip content={<NetworkTooltip />} cursor={{ stroke: '#5c6370', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                                <Legend wrapperStyle={{ paddingTop: 10 }} />
-                                <Area type="monotone" dataKey="value" name="TX" stroke="#8a2be2" strokeWidth={2} fillOpacity={1} fill="url(#colorTx)" activeDot={{ r: 6, strokeWidth: 0 }} isAnimationActive={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                <XAxis dataKey="time" stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <YAxis tickFormatter={formatNetworkTick} stroke="transparent" tick={{ fill: '#555', fontSize: 11 }} tickLine={false} />
+                                <Tooltip content={<NetworkTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
+                                <Legend wrapperStyle={{ paddingTop: 10, fontSize: '0.75rem' }} />
+                                <Area type="monotone" dataKey="value" name="TX" stroke="#8a2be2" strokeWidth={1.5} fillOpacity={1} fill="url(#colorTx)" activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={false} />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </Box>
+                    </ChartPanel>
                 </Box>
             )}
         </Box>

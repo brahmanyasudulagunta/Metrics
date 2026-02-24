@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.services.prometheus_client import PromClient
-from app.services.docker_client import get_container_logs, get_container_processes
-from app.api.auth import create_access_token, get_current_user
-from app.db.database import SessionLocal
-from app.db.models import User
-from app.api.security import hash_password, verify_password
+from services.prometheus_client import PromClient
+from services.docker_client import get_container_logs, get_container_processes
+from api.auth import create_access_token, get_current_user
+from db.database import SessionLocal
+from db.models import User
+from api.security import hash_password, verify_password
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -311,7 +311,14 @@ def query_range_raw(
         # can have completely unpredictable shapes (vectors, matrices, etc.)
         return client.query_range_result_like_prom(query, start=start, end=end, step=step)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        # Prometheus returns 400 for range vector selectors like metric[5m] in query_range
+        if "400" in error_msg or "Bad Request" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid PromQL for range query. If using a range vector selector like [5m], wrap it in a function like rate() or irate(). Error: {error_msg}"
+            )
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @router.post("/signup")
 def signup(data: SignupRequest):

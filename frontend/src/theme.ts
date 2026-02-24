@@ -55,11 +55,11 @@ export const getTheme = (mode: 'light' | 'dark'): Theme => {
             },
             MuiCard: {
                 styleOverrides: {
-                    root: ({ theme }) => ({
+                    root: {
                         backgroundImage: 'none',
-                        border: `1px solid ${theme.palette.divider}`,
+                        border: 'none',
                         boxShadow: 'none',
-                    }),
+                    },
                 },
             },
             MuiPaper: {

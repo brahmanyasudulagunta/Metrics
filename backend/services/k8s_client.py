@@ -52,7 +52,7 @@ class K8sClient:
                 import re
                 c = client.Configuration.get_default_copy()
                 if c.host and ("127.0.0.1" in c.host or "localhost" in c.host):
-                    c.host = re.sub(r'(https?://)(127\.0\.0\.1|localhost):\d+', r'\1gitops-cluster-control-plane:6443', c.host)
+                    c.host = re.sub(r'(https?://)(127\.0\.0\.1|localhost):\d+', r'\1gitops-control-plane:6443', c.host)
                     c.verify_ssl = False
                     client.Configuration.set_default(c)
                 logger.info("Loaded local kubeconfig (auto-rewritten for Kind).")

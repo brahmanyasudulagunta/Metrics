@@ -29,8 +29,8 @@ interface ContainerInfo { name: string; cpu: number; memory: number; }
 /* ── Thresholds ── */
 const THRESHOLDS = {
     cpu: { warning: 60, critical: 80 },
-    memory: { warning: 70, critical: 85 },
-    disk: { warning: 75, critical: 90 },
+    memory: { warning: 60, critical: 85 },
+    disk: { warning: 60, critical: 90 },
 };
 
 const getStatusColor = (value: number, thresholds = { warning: 60, critical: 80 }) => {
@@ -268,15 +268,6 @@ const Overview: React.FC = () => {
 
     return (
         <Box>
-            {/* ── Status Header ── */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <FiberManualRecordIcon sx={{ fontSize: 12, color: overallStatus.color }} />
-                    <Typography variant="h5" sx={{ fontWeight: 600 }}>{overallStatus.label}</Typography>
-                </Box>
-                <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>Updated {timeSinceUpdate()}</Typography>
-            </Box>
-
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             {/* ── Top Row: 4 Separate Resource utilization Cards ── */}

@@ -1,0 +1,15 @@
+apiVersion: v1
+entries:
+  metrics:
+  - apiVersion: v2
+    appVersion: v1
+    created: "2026-03-04T18:07:21.906432067-06:00"
+    description: A Kubernetes-native monitoring dashboard with Prometheus metrics
+      and live cluster visibility
+    digest: d42d66367b58eaaf1265fd343c69a15c0519eda8ce0a4b8e83313a93d6d4c6a9
+    name: metrics
+    type: application
+    urls:
+    - https://brahmanyasudulagunta.github.io/Metrics/metrics-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-03-04T18:07:21.906209973-06:00"

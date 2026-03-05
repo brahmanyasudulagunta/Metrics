@@ -50,6 +50,8 @@ services:
       - backend-data:/app/data
     env_file:
       - ../backend/.env
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
     ports:
       - "8000:8000"
     depends_on:

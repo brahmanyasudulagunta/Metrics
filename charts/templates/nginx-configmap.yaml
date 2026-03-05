@@ -11,7 +11,7 @@ data:
         index index.html;
 
         location /api/ {
-            proxy_pass http://{{ .Release.Name }}-backend:8000;
+            proxy_pass http://{{ .Release.Name }}-api:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }

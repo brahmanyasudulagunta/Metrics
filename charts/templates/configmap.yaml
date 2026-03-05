@@ -12,5 +12,5 @@ data:
   K8S_MODE: "incluster"
   CORS_ORIGINS: "*"
   JWT_ALGORITHM: "HS256"
-  DEV_MODE: {{ .Values.backend.devMode | quote }}
+  DEV_MODE: {{ .Values.api.devMode | quote }}
 

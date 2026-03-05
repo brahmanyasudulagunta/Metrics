@@ -16,7 +16,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ .Release.Name }}-frontend
+                name: {{ .Release.Name }}-dashboard
                 port:
                   number: 3001
 {{- end }}

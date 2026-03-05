@@ -8,5 +8,5 @@ roleRef:
   name: {{ .Release.Name }}-k8s-reader
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.name | default (printf "%s-backend" .Release.Name) }}
+    name: {{ .Values.serviceAccount.name | default (printf "%s-api" .Release.Name) }}
     namespace: {{ .Release.Namespace }}

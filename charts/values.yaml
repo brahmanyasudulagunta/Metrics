@@ -1,4 +1,4 @@
-backend:
+api:
   image: ashrith2727/backend-metrics
   tag: "v1"
   replicas: 1
@@ -6,7 +6,7 @@ backend:
   jwtSecret: supersecretkey
   devMode: false
 
-frontend:
+dashboard:
   image: ashrith2727/frontend-metrics
   tag: "v1"
   replicas: 1

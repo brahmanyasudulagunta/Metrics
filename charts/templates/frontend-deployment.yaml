@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-frontend
+  name: {{ .Release.Name }}-dashboard
   labels:
-    app: {{ .Release.Name }}-frontend
+    app: {{ .Release.Name }}-dashboard
 spec:
-  replicas: {{ .Values.frontend.replicas }}
+  replicas: {{ .Values.dashboard.replicas }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-frontend
+      app: {{ .Release.Name }}-dashboard
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-frontend
+        app: {{ .Release.Name }}-dashboard
     spec:
       containers:
         - name: frontend
-          image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
+          image: "{{ .Values.dashboard.image }}:{{ .Values.dashboard.tag }}"
           imagePullPolicy: Always
           ports:
             - containerPort: 3001

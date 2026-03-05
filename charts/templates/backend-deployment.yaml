@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-backend
+  name: {{ .Release.Name }}-api
   labels:
-    app: {{ .Release.Name }}-backend
+    app: {{ .Release.Name }}-api
 spec:
-  replicas: {{ .Values.backend.replicas }}
+  replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-backend
+      app: {{ .Release.Name }}-api
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-backend
+        app: {{ .Release.Name }}-api
     spec:
-      serviceAccountName: {{ .Values.serviceAccount.name | default (printf "%s-backend" .Release.Name) }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (printf "%s-api" .Release.Name) }}
       containers:
         - name: backend
-          image: "{{ .Values.backend.image }}:{{ .Values.backend.tag }}"
+          image: "{{ .Values.api.image }}:{{ .Values.api.tag }}"
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

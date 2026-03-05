@@ -1,0 +1,37 @@
+apiVersion: v1
+entries:
+  metrics:
+  - apiVersion: v2
+    appVersion: v1
+    created: "2026-03-04T22:17:07.070670255-06:00"
+    dependencies:
+    - alias: monitoring
+      condition: monitoring.enabled
+      name: kube-prometheus-stack
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 72.x
+    description: A Kubernetes-native monitoring dashboard with Prometheus metrics
+      and live cluster visibility
+    digest: 82adfa9664acb5af4be5d0dd20b610388cf767213e0c242960fa38888d7f07cf
+    name: metrics
+    type: application
+    urls:
+    - https://brahmanyasudulagunta.github.io/Metrics/metrics-0.2.2.tgz
+    version: 0.2.2
+  - apiVersion: v2
+    appVersion: v1
+    created: "2026-03-04T22:17:07.026945834-06:00"
+    dependencies:
+    - alias: monitoring
+      name: kube-prometheus-stack
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 72.x
+    description: A Kubernetes-native monitoring dashboard with Prometheus metrics
+      and live cluster visibility
+    digest: 5e35513acb3b902ee804508621f907bf2dc522ca8b1d45b18fa75c9052f78932
+    name: metrics
+    type: application
+    urls:
+    - https://brahmanyasudulagunta.github.io/Metrics/metrics-0.2.1.tgz
+    version: 0.2.1
+generated: "2026-03-04T22:17:06.983418767-06:00"

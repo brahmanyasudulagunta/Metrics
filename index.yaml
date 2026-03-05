@@ -6,7 +6,7 @@ entries:
     created: "2026-03-04T20:30:27.898702647-06:00"
     dependencies:
     - alias: monitoring
-      name: kube-prometheus-stack
+      name: metrics-stack
       repository: https://prometheus-community.github.io/helm-charts
       version: 72.x
     description: A Kubernetes-native monitoring dashboard with Prometheus metrics

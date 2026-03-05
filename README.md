@@ -1,4 +1,4 @@
-# 📊 Metrics
+# Metrics
 
 A **Kubernetes-native monitoring dashboard** that gives you real-time visibility into system resources, Docker containers, and Kubernetes clusters — all from a clean dark-themed UI powered by Prometheus.
 
@@ -26,7 +26,7 @@ A **Kubernetes-native monitoring dashboard** that gives you real-time visibility
 
 ---
 
-## 🚀 Install via Helm
+## Install via Helm
 
 ### Add the Helm Repository
 
@@ -46,10 +46,11 @@ helm install metrics metrics/metrics \
 ```
 
 This deploys:
-- ✅ Metrics Dashboard (frontend + backend)
-- ✅ Prometheus (auto-installed)
-- ✅ Node Exporter
-- ✅ Kube State Metrics
+- Metrics Dashboard (React UI)
+- Metrics API (FastAPI backend)
+- Prometheus (auto-installed)
+- Node Exporter
+- Kube State Metrics
 
 ### Option 2: Existing Prometheus
 
@@ -83,9 +84,9 @@ helm install metrics metrics/metrics \
 
 ---
 
-## 🌐 Access the Dashboard
+## Access the Dashboard
 
-After installation, port-forward the frontend:
+After installation, port-forward the dashboard:
 
 ```bash
 kubectl port-forward svc/metrics-dashboard 3001:3001 -n metrics
@@ -103,7 +104,7 @@ Open **http://localhost:3001** and log in.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 All configurable values in `values.yaml`:
 
@@ -111,10 +112,10 @@ All configurable values in `values.yaml`:
 
 | Parameter | Default | Description |
 |---|---|---|
-| `api.image` | `ashrith2727/backend-metrics` | Backend Docker image |
-| `api.tag` | `v1` | Backend image tag |
-| `dashboard.image` | `ashrith2727/frontend-metrics` | Frontend Docker image |
-| `dashboard.tag` | `v1` | Frontend image tag |
+| `api.image` | `ashrith2727/backend-metrics` | Backend API Docker image |
+| `api.tag` | `v1` | Backend API image tag |
+| `dashboard.image` | `ashrith2727/frontend-metrics` | Frontend Dashboard Docker image |
+| `dashboard.tag` | `v1` | Frontend Dashboard image tag |
 | `api.adminPassword` | `admin` | Initial admin password |
 | `api.jwtSecret` | `supersecretkey` | JWT signing secret |
 
@@ -136,26 +137,11 @@ All configurable values in `values.yaml`:
 
 ---
 
-## 🔄 Upgrade
-
-```bash
-helm repo update
-helm upgrade metrics metrics/metrics -n metrics
-```
-
-## 🗑️ Uninstall
-
-```bash
-helm uninstall metrics -n metrics
-```
-
----
-
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌──────────────────┐
-│   Frontend   │────▶│   Backend   │────▶│    Prometheus     │
+│  Dashboard   │────▶│     API       │────▶│    Prometheus     │
 │  (React UI)  │     │  (FastAPI)  │     │   (metrics src)  │
 │  port: 3001  │     │  port: 8000 │     │   port: 9090     │
 └─────────────┘     └──────┬──────┘     └────────▲─────────┘
@@ -166,7 +152,42 @@ helm uninstall metrics -n metrics
                       └─────────┘          └──────────────┘
 ```
 
-## 📝 Local Development (Docker Compose)
+---
+
+## Helm Release Workflow (For Developers)
+
+To publish a new version of the Helm chart to the GitHub Pages (`gh-pages`) branch safely:
+
+```bash
+# 1. Start on the main branch
+git checkout main
+
+# 2. Update the version inside charts/Chart.yaml (e.g., to 0.2.x)
+
+# 3. Package the chart and temporarily save it OUTSIDE the repo
+helm dependency update ./charts
+helm package ./charts
+cp metrics-0.2.x.tgz /tmp/
+
+# 4. Switch to the gh-pages "bookshelf" branch
+git checkout gh-pages
+
+# 5. Bring the package back from /tmp/ and generate the index
+cp /tmp/metrics-0.2.x.tgz .
+helm repo index . --url https://brahmanyasudulagunta.github.io/Metrics
+
+# 6. Commit and push the new release
+git add index.yaml metrics-0.2.x.tgz
+git commit -m "Helm chart release 0.2.x"
+git push origin gh-pages
+
+# 7. Go back to work!
+git checkout main
+```
+
+---
+
+## Local Development (Docker Compose)
 
 ```bash
 # Build
@@ -179,14 +200,6 @@ docker compose -f infra/docker-compose.yml up -d
 # Stop
 docker compose -f infra/docker-compose.yml down
 ```
-
-| Service | URL |
-|---|---|
-| Dashboard | http://localhost:3001 |
-| API Docs | http://localhost:8000/docs |
-| Prometheus | http://localhost:9090 |
-
----
 
 ## License
 

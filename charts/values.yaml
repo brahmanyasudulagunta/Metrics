@@ -5,11 +5,24 @@ api:
   adminPassword: admin
   jwtSecret: supersecretkey
   devMode: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
 
 dashboard:
   image: ashrith2727/frontend-metrics
   tag: "v1"
   replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
 
 # External Prometheus (used when monitoring.enabled=false)
 # Set this to your existing Prometheus URL

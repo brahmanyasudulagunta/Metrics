@@ -21,6 +21,10 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
+          {{- with .Values.api.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-config

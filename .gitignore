@@ -1,0 +1,9 @@
+# Ignore all development source code directories on the gh-pages branch
+# This branch is purely used for hosting the Helm chart repository
+backend/
+frontend/
+infra/
+data/
+
+# Ignore all environment variables specifically just in case
+**/.env*

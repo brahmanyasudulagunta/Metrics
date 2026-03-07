@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, AppBar, Toolbar, Typography, Button, IconButton, Divider, Tooltip as MuiTooltip } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ExploreIcon from '@mui/icons-material/Explore';
-import StorageIcon from '@mui/icons-material/Storage';
+import SavingsIcon from '@mui/icons-material/Savings';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import WifiIcon from '@mui/icons-material/Wifi';
@@ -22,8 +22,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
     const menuItems = [
         { text: 'Overview', icon: <DashboardIcon sx={{ mr: 1, fontSize: 20 }} />, path: '/dashboard' },
         { text: 'Explore', icon: <ExploreIcon sx={{ mr: 1, fontSize: 20 }} />, path: '/dashboard/explore' },
-        { text: 'Containers', icon: <StorageIcon sx={{ mr: 1, fontSize: 20 }} />, path: '/dashboard/containers' },
         { text: 'Kubernetes', icon: <CloudIcon sx={{ mr: 1, fontSize: 20 }} />, path: '/dashboard/kubernetes' },
+        { text: 'Optimization', icon: <SavingsIcon sx={{ mr: 1, fontSize: 20 }} />, path: '/dashboard/optimization' },
     ];
 
     const handleNavigation = (path: string) => {

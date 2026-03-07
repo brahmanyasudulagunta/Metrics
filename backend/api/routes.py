@@ -12,14 +12,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 client = PromClient()
 
-# Detect runtime: in K8s, use container/pod labels; in Docker, use name label
-IS_K8S = os.getenv("K8S_MODE", "auto") == "incluster"
-
-try:
-    from services.docker_client import get_container_logs, get_container_processes
-    HAS_DOCKER = True
-except Exception:
-    HAS_DOCKER = False
+# Strictly run as a Kubernetes-native dashboard
+IS_K8S = True
+HAS_DOCKER = False
 
 class LoginRequest(BaseModel):
     username: str
@@ -193,13 +188,9 @@ def container_list(current_user: str = Depends(get_current_user)):
     Docker mode: shows Docker containers. K8s mode: shows pod containers.
     """
     try:
-        if IS_K8S:
-            ns_exclude = 'namespace!~"kube-system|kube-public|kube-node-lease"'
-            cpu_query = f'sum(irate(container_cpu_usage_seconds_total{{container!="",container!="POD",image!="",{ns_exclude}}}[2m])) by (container,pod,namespace) * 100'
-            mem_query = f'sum(container_memory_usage_bytes{{container!="",container!="POD",image!="",{ns_exclude}}}) by (container,pod,namespace)'
-        else:
-            cpu_query = 'sum(irate(container_cpu_usage_seconds_total{name!="",name!~".*POD.*"}[2m])) by (name) * 100'
-            mem_query = 'container_memory_usage_bytes{name!="",name!~".*POD.*"}'
+        ns_exclude = 'namespace!~"kube-system|kube-public|kube-node-lease"'
+        cpu_query = f'sum(irate(container_cpu_usage_seconds_total{{container!="",container!="POD",image!="",{ns_exclude}}}[2m])) by (container,pod,namespace) * 100'
+        mem_query = f'sum(container_memory_usage_bytes{{container!="",container!="POD",image!="",{ns_exclude}}}) by (container,pod,namespace)'
         
         cpu_res = client.query(cpu_query)
         mem_res = client.query(mem_query)
@@ -227,14 +218,10 @@ def container_list(current_user: str = Depends(get_current_user)):
         
         for result in cpu_res.get("data", {}).get("result", []):
             metric = result.get("metric", {})
-            if IS_K8S:
-                name = metric.get("container", "")
-                pod = metric.get("pod", "")
-                display = f"{name} ({pod})" if pod else name
-                key = f"{metric.get('namespace','')}/{pod}/{name}"
-            else:
-                display = metric.get("name", "")
-                key = display
+            name = metric.get("container", "")
+            pod = metric.get("pod", "")
+            display = f"{name} ({pod})" if pod else name
+            key = f"{metric.get('namespace','')}/{pod}/{name}"
             if not display:
                 continue
             try:
@@ -264,17 +251,11 @@ def container_cpu(
     step: str = '15s'
 ):
     """Get container CPU usage over time"""
-    if IS_K8S:
-        ns_exclude = 'namespace!~"kube-system|kube-public|kube-node-lease"'
-        if container_name:
-            q = f'sum(rate(container_cpu_usage_seconds_total{{container="{container_name}",image!="",{ns_exclude}}}[1m])) by (container,pod) * 100'
-        else:
-            q = f'sum(rate(container_cpu_usage_seconds_total{{container!="",container!="POD",image!="",{ns_exclude}}}[1m])) by (container,pod) * 100'
+    ns_exclude = 'namespace!~"kube-system|kube-public|kube-node-lease"'
+    if container_name:
+        q = f'sum(rate(container_cpu_usage_seconds_total{{container="{container_name}",image!="",{ns_exclude}}}[1m])) by (container,pod) * 100'
     else:
-        if container_name:
-            q = f'sum(rate(container_cpu_usage_seconds_total{{name="{container_name}"}}[1m])) by (name) * 100'
-        else:
-            q = 'sum(rate(container_cpu_usage_seconds_total{name!=""}[1m])) by (name) * 100'
+        q = f'sum(rate(container_cpu_usage_seconds_total{{container!="",container!="POD",image!="",{ns_exclude}}}[1m])) by (container,pod) * 100'
     return client.query_range_for_chart(q, start=start, end=end, step=step)
 
 
@@ -290,17 +271,11 @@ def container_memory(
     step: str = '15s'
 ):
     """Get container memory usage over time (in MB)"""
-    if IS_K8S:
-        ns_exclude = 'namespace!~"kube-system|kube-public|kube-node-lease"'
-        if container_name:
-            q = f'sum(container_memory_usage_bytes{{container="{container_name}",image!="",{ns_exclude}}}) by (container,pod) / 1024 / 1024'
-        else:
-            q = f'sum(container_memory_usage_bytes{{container!="",container!="POD",image!="",{ns_exclude}}}) by (container,pod) / 1024 / 1024'
+    ns_exclude = 'namespace!~"kube-system|kube-public|kube-node-lease"'
+    if container_name:
+        q = f'sum(container_memory_usage_bytes{{container="{container_name}",image!="",{ns_exclude}}}) by (container,pod) / 1024 / 1024'
     else:
-        if container_name:
-            q = f'container_memory_usage_bytes{{name="{container_name}"}} / 1024 / 1024'
-        else:
-            q = 'container_memory_usage_bytes{name!=""} / 1024 / 1024'
+        q = f'sum(container_memory_usage_bytes{{container!="",container!="POD",image!="",{ns_exclude}}}) by (container,pod) / 1024 / 1024'
     return client.query_range_for_chart(q, start=start, end=end, step=step)
 
 # ---------------------
@@ -313,11 +288,7 @@ def container_logs(
     current_user: str = Depends(get_current_user)
 ):
     """Get live logs for a specific container"""
-    if HAS_DOCKER and not IS_K8S:
-        logs = get_container_logs(container_name, tail)
-        return {"logs": logs}
-    else:
-        return {"logs": "Container logs are available via the Kubernetes tab in K8s mode."}
+    return {"logs": "Container logs are available natively via the Kubernetes tab."}
 
 # ---------------------
 # CONTAINER PROCESSES (Live)
@@ -328,13 +299,7 @@ def container_processes(
     current_user: str = Depends(get_current_user)
 ):
     """Get live processes (`docker top`) for a specific container"""
-    if HAS_DOCKER and not IS_K8S:
-        processes = get_container_processes(container_name)
-        if isinstance(processes, dict) and "error" in processes:
-            raise HTTPException(status_code=500, detail=processes["error"])
-        return processes
-    else:
-        return {"titles": ["INFO"], "processes": [["Container processes available via kubectl exec in K8s mode."]]}
+    return {"titles": ["INFO"], "processes": [["Container processes are only available via kubectl exec natively."]]}
 
 
 # ---------------------
@@ -366,6 +331,70 @@ def query_range_raw(
                 detail=f"Invalid PromQL for range query. If using a range vector selector like [5m], wrap it in a function like rate() or irate(). Error: {error_msg}"
             )
         raise HTTPException(status_code=500, detail=error_msg)
+
+# ---------------------
+# RESOURCE OPTIMIZATION
+# ---------------------
+@router.get("/metrics/optimization")
+def resource_optimization(current_user: str = Depends(get_current_user)):
+    """Calculate resource over-provisioning (Waste) by comparing requests vs actual usage"""
+    try:
+        # 1. Fetch memory requests aggregated by Pod
+        mem_req_query = 'sum(kube_pod_container_resource_requests{resource="memory"}) by (namespace, pod)'
+        mem_req_res = client.query(mem_req_query)
+
+        # 2. Fetch actual memory usage average over last hour, aggregated by Pod
+        mem_usage_query = 'sum(avg_over_time(container_memory_working_set_bytes{container!="POD", container!=""}[1h])) by (namespace, pod)'
+        mem_usage_res = client.query(mem_usage_query)
+        
+        # Parse data
+        requests_map = {}
+        for res in mem_req_res.get("data", {}).get("result", []):
+            metric = res.get("metric", {})
+            key = f'{metric.get("namespace", "")}/{metric.get("pod", "")}'
+            if metric.get("pod"): # Ensure it's not a global empty sum
+                val = float(res.get("value", [0, 0])[1])
+                requests_map[key] = val
+
+        usage_map = {}
+        for res in mem_usage_res.get("data", {}).get("result", []):
+            metric = res.get("metric", {})
+            key = f'{metric.get("namespace", "")}/{metric.get("pod", "")}'
+            if metric.get("pod"):
+                val = float(res.get("value", [0, 0])[1])
+                usage_map[key] = val
+
+        optimizations = []
+        for key, req_bytes in requests_map.items():
+            if key in usage_map:
+                use_bytes = usage_map[key]
+                waste_bytes = req_bytes - use_bytes
+                
+                # Only care if they requested more than they use by a significant margin (e.g., > 10MB waste)
+                if waste_bytes > 10 * 1024 * 1024:
+                    parts = key.split("/")
+                    optimizations.append({
+                        "namespace": parts[0],
+                        "pod": parts[1] if len(parts) > 1 else "",
+                        "container": "All", # Aggregated at pod level
+                        "requested_mb": round(req_bytes / (1024*1024), 2),
+                        "used_mb": round(use_bytes / (1024*1024), 2),
+                        "waste_mb": round(waste_bytes / (1024*1024), 2)
+                    })
+        
+        optimizations.sort(key=lambda x: x["waste_mb"], reverse=True)
+        
+        total_waste_mb = sum(opt["waste_mb"] for opt in optimizations)
+        # Assuming cloud RAM costs ~$10 per GB per month (extremely rough estimate)
+        estimated_monthly_waste = round((total_waste_mb / 1024) * 10, 2)
+        
+        return {
+            "optimizations": optimizations,
+            "total_waste_mb": round(total_waste_mb, 2),
+            "estimated_monthly_waste_usd": estimated_monthly_waste
+        }
+    except Exception as e:
+        return {"error": str(e), "optimizations": [], "total_waste_mb": 0, "estimated_monthly_waste_usd": 0}
 
 @router.post("/login")
 def login(data: LoginRequest):

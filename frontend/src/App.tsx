@@ -6,10 +6,9 @@ import ChangePassword from './components/ChangePassword';
 import MainLayout from './components/layout/MainLayout';
 import Overview from './pages/Overview';
 import Explore from './pages/Explorer';
-import Containers from './pages/Containers';
-import ContainerDetail from './pages/ContainerDetail';
 import Kubernetes from './pages/Kubernetes';
 import PodDetail from './pages/PodDetail';
+import Optimization from './pages/Optimization';
 import Settings from './pages/Settings';
 import { getTheme } from './theme';
 import axios from 'axios';
@@ -54,10 +53,9 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={isAuthenticated ? <MainLayout onLogout={handleLogout} /> : <Navigate to="/login" />}>
               <Route index element={<Overview />} />
               <Route path="explore" element={<Explore />} />
-              <Route path="containers" element={<Containers />} />
-              <Route path="containers/:id" element={<ContainerDetail />} />
               <Route path="kubernetes" element={<Kubernetes />} />
               <Route path="kubernetes/:namespace/:name" element={<PodDetail />} />
+              <Route path="optimization" element={<Optimization />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Paper, Box, Alert, Avatar } from '@mui/material';
+import { TextField, Button, Container, Typography, Paper, Box, Alert } from '@mui/material';
 import MetricsLogo from './MetricsLogo';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config';
+import { tokens } from '../theme';
 
 interface LoginProps {
   setAuth: (auth: boolean) => void;
@@ -32,48 +33,70 @@ const Login: React.FC<LoginProps> = ({ setAuth }) => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={0} sx={{ padding: 4, marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid #2c3235' }}>
-        <Avatar sx={{ m: 1, bgcolor: 'transparent', width: 56, height: 56 }}>
-          <MetricsLogo sx={{ fontSize: 48, filter: 'drop-shadow(0 0 6px rgba(0,229,255,0.6))' }} />
-        </Avatar>
-        <Typography component="h1" variant="h5" color="textPrimary">
-          Metrics
-        </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-          Sign in to continue
-        </Typography>
-        {error && <Alert severity="error" sx={{ mb: 2, width: '100%', mt: 2 }}>{error}</Alert>}
-        <Box component="form" noValidate sx={{ mt: 1, width: '100%' }} onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+    <Box sx={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      bgcolor: tokens.bg.base,
+      px: 3,
+    }}>
+      <Paper sx={{
+        p: 5,
+        width: '100%',
+        maxWidth: 420,
+        borderRadius: '12px',
+      }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <MetricsLogo sx={{ fontSize: 48, filter: 'drop-shadow(0 0 6px rgba(0,229,255,0.6))', mb: 1.5 }} />
+          <Typography variant="h5" sx={{ color: tokens.text.primary, fontWeight: 700, mb: 0.5 }}>
+            Metrics
+          </Typography>
+          <Typography variant="body2" sx={{ color: tokens.text.muted }}>
+            Sign in to your dashboard
+          </Typography>
+        </Box>
+
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+        <Box component="form" noValidate onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Username</Typography>
           <TextField
-            margin="normal"
-            required
             fullWidth
-            label="Username"
+            size="small"
+            placeholder="Enter your username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoFocus
+            sx={{ mb: 2 }}
           />
+          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Password</Typography>
           <TextField
-            margin="normal"
-            required
             fullWidth
-            label="Password"
+            size="small"
             type="password"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            sx={{ mb: 3 }}
           />
           <Button
             fullWidth
             variant="contained"
             type="submit"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{
+              bgcolor: tokens.accent.blue,
+              '&:hover': { bgcolor: tokens.accent.blueHover },
+              py: 1.25,
+              fontWeight: 600,
+              boxShadow: 'none',
+            }}
           >
-            Login
+            Sign In
           </Button>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 

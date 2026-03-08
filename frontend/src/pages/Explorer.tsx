@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Button, Paper, CircularProgress, Alert, Tab
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import API_URL from '../config';
+import { tokens } from '../theme';
 
 interface MetricResult {
     metric: Record<string, string>;
@@ -30,13 +31,11 @@ const Explorer: React.FC = () => {
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [lines, setLines] = useState<string[]>([]);
     const [seriesStats, setSeriesStats] = useState<SeriesStat[]>([]);
-
-    // UI state placeholders for the requested toggles
     const [viewMode, setViewMode] = useState<'graph' | 'table'>('graph');
 
     const colors = [
-        '#5794f2', '#73bf69', '#ff9830', '#f2495c', '#8a2be2',
-        '#00ced1', '#ff1493', '#32cd32', '#ffeb3b', '#00ffff',
+        tokens.chart.cpu, tokens.chart.memory, tokens.chart.disk, tokens.chart.danger, tokens.accent.purple,
+        tokens.accent.cyan, '#ff1493', '#32cd32', '#ffeb3b', '#00ffff',
         '#ff69b4', '#7b68ee', '#20b2aa', '#ff6347', '#ba55d3'
     ];
 
@@ -58,9 +57,8 @@ const Explorer: React.FC = () => {
 
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
-
         const end = Math.floor(Date.now() / 1000);
-        const start = end - 3600; // 1 hour
+        const start = end - 3600;
 
         try {
             const encodedQuery = encodeURIComponent(query);
@@ -89,11 +87,7 @@ const Explorer: React.FC = () => {
                 lineKeys.push(lineName);
 
                 const color = colors[index % colors.length];
-                let sum = 0;
-                let min = Number.MAX_VALUE;
-                let max = -Number.MAX_VALUE;
-                let last = 0;
-                let count = 0;
+                let sum = 0, min = Number.MAX_VALUE, max = -Number.MAX_VALUE, last = 0, count = 0;
 
                 series.values.forEach(([timestamp, value]) => {
                     const timeStr = new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -116,18 +110,13 @@ const Explorer: React.FC = () => {
                 if (min === Number.MAX_VALUE) min = 0;
                 if (max === -Number.MAX_VALUE) max = 0;
                 const avg = count > 0 ? sum / count : 0;
-
                 stats.push({ name: lineName, color, last, min, max, avg });
             });
 
-            const finalChartData = Object.values(transformedData).sort((a, b) => {
-                return a.time.localeCompare(b.time);
-            });
-
+            const finalChartData = Object.values(transformedData).sort((a, b) => a.time.localeCompare(b.time));
             setLines(lineKeys);
             setChartData(finalChartData);
             setSeriesStats(stats);
-
         } catch (err: any) {
             setError(err.response?.data?.detail || err.message || 'Failed to execute query.');
         } finally {
@@ -142,25 +131,25 @@ const Explorer: React.FC = () => {
             const hiddenCount = sortedPayload.length - displayPayload.length;
 
             return (
-                <Paper sx={{ p: 1.5, bgcolor: '#181b1f', border: '1px solid #2c3235', maxWidth: 400 }}>
-                    <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>{label}</Typography>
+                <Box sx={{ p: 1.5, bgcolor: 'rgba(13,17,23,0.95)', border: `1px solid ${tokens.border.default}`, borderRadius: 1, maxWidth: 400 }}>
+                    <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8125rem' }}>{label}</Typography>
                     {displayPayload.map((entry: any, index: number) => (
                         <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                             <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: entry.color, mr: 1, flexShrink: 0 }} />
                             <Typography variant="caption" sx={{ flexGrow: 1, mr: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {entry.name}
                             </Typography>
-                            <Typography variant="caption" fontWeight="bold">
+                            <Typography variant="caption" fontWeight={700}>
                                 {formatValue(entry.value)}
                             </Typography>
                         </Box>
                     ))}
                     {hiddenCount > 0 && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: tokens.text.muted }}>
                             ...and {hiddenCount} more series
                         </Typography>
                     )}
-                </Paper>
+                </Box>
             );
         }
         return null;
@@ -168,21 +157,12 @@ const Explorer: React.FC = () => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>PromQL Explorer</Typography>
-            </Box>
+            <Typography variant="h5" sx={{ mb: 3 }}>PromQL Explorer</Typography>
 
-            {/* Top Query Bar Area */}
-            <Paper sx={{
-                p: 1.5,
-                mb: 2,
-                bgcolor: '#161b22',
-                border: '1px solid #30363d',
-                borderRadius: 1
-            }}>
-                {/* Input Row */}
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                    <Typography sx={{ color: '#8b949e', px: 1 }}>{`>_`}</Typography>
+            {/* Query Bar */}
+            <Paper sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+                    <Typography sx={{ color: tokens.text.muted, px: 1, fontFamily: 'monospace' }}>{`>_`}</Typography>
                     <TextField
                         fullWidth
                         size="small"
@@ -192,20 +172,18 @@ const Explorer: React.FC = () => {
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleRunQuery()}
                         InputProps={{
-                            style: { fontFamily: 'monospace', fontSize: '0.9rem', backgroundColor: '#0d1117', color: '#e6edf3' }
+                            style: { fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: '0.875rem' }
                         }}
                     />
                     <Button
                         variant="contained"
                         sx={{
-                            bgcolor: '#238636',
-                            color: '#fff',
-                            '&:hover': { bgcolor: '#2ea043' },
-                            textTransform: 'none',
-                            fontWeight: 'bold',
+                            bgcolor: tokens.accent.green,
+                            '&:hover': { bgcolor: tokens.accent.greenHover },
+                            fontWeight: 600,
                             px: 3,
                             whiteSpace: 'nowrap',
-                            boxShadow: 'none'
+                            boxShadow: 'none',
                         }}
                         onClick={handleRunQuery}
                         disabled={loading || !query.trim()}
@@ -217,38 +195,24 @@ const Explorer: React.FC = () => {
 
             {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-            {/* Content Area - Tabbed Layout */}
+            {/* Content Area */}
             {chartData.length > 0 && (
                 <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ borderBottom: 1, borderColor: '#30363d', mb: 2 }}>
-                        <Tabs
-                            value={viewMode}
-                            onChange={(e, newValue) => setViewMode(newValue)}
-                            textColor="primary"
-                            indicatorColor="primary"
-                            sx={{
-                                '& .MuiTab-root': { textTransform: 'none', fontWeight: 'bold' }
-                            }}
-                        >
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                        <Tabs value={viewMode} onChange={(e, newValue) => setViewMode(newValue)}>
                             <Tab label="Table" value="table" />
                             <Tab label="Graph" value="graph" />
                         </Tabs>
                     </Box>
 
-                    {/* Left: Graph */}
                     {viewMode === 'graph' && (
-                        <Paper sx={{ flexGrow: 1, p: 2, display: 'flex', flexDirection: 'column', height: 500 }}>
+                        <Paper sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', height: 500 }}>
                             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#2c3235" vertical={false} />
-                                        <XAxis dataKey="time" stroke="#8e9297" tick={{ fill: '#8e9297', fontSize: 12 }} />
-                                        <YAxis
-                                            stroke="#8e9297"
-                                            tick={{ fill: '#8e9297', fontSize: 12 }}
-                                            tickFormatter={formatValue}
-                                            width={60}
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={tokens.border.subtle} vertical={false} />
+                                        <XAxis dataKey="time" stroke="transparent" tick={{ fill: tokens.text.faint, fontSize: 12 }} />
+                                        <YAxis stroke="transparent" tick={{ fill: tokens.text.faint, fontSize: 12 }} tickFormatter={formatValue} width={60} />
                                         <Tooltip content={<CustomTooltip />} />
                                         {lines.map((lineKey, index) => (
                                             <Line
@@ -269,49 +233,45 @@ const Explorer: React.FC = () => {
                         </Paper>
                     )}
 
-                    {/* Right: Series Data Table */}
                     {viewMode === 'table' && (
-                        <Paper sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                            <TableContainer sx={{ flexGrow: 1 }}>
-                                <Table size="small" stickyHeader>
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell sx={{ minWidth: 150, bgcolor: '#161b22', color: '#e6edf3', borderBottom: '1px solid #30363d' }}>Item</TableCell>
-                                            <TableCell align="right" sx={{ bgcolor: '#161b22', color: '#e6edf3', borderBottom: '1px solid #30363d' }}>Last</TableCell>
-                                            <TableCell align="right" sx={{ bgcolor: '#161b22', color: '#e6edf3', borderBottom: '1px solid #30363d' }}>Avg</TableCell>
+                        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ minWidth: 150 }}>Item</TableCell>
+                                        <TableCell align="right">Last</TableCell>
+                                        <TableCell align="right">Avg</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {seriesStats.map((stat, i) => (
+                                        <TableRow key={i} hover>
+                                            <TableCell sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.5 }}>
+                                                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: stat.color, flexShrink: 0 }} />
+                                                <Typography sx={{
+                                                    fontFamily: 'monospace',
+                                                    fontSize: '0.8125rem',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: 800
+                                                }} title={stat.name}>
+                                                    {stat.name}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>{formatValue(stat.last)}</TableCell>
+                                            <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: tokens.text.muted }}>{formatValue(stat.avg)}</TableCell>
                                         </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {seriesStats.map((stat, i) => (
-                                            <TableRow key={i} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                                <TableCell sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1, borderBottom: '1px solid #30363d' }}>
-                                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: stat.color, flexShrink: 0 }} />
-                                                    <Typography variant="body2" sx={{
-                                                        fontFamily: 'monospace',
-                                                        fontSize: '0.85rem',
-                                                        color: '#e6edf3',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        maxWidth: 800
-                                                    }} title={stat.name}>
-                                                        {stat.name}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.85rem', borderBottom: '1px solid #30363d' }}>{formatValue(stat.last)}</TableCell>
-                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#8b949e', borderBottom: '1px solid #30363d' }}>{formatValue(stat.avg)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                        </Paper>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
                     )}
                 </Box>
             )}
 
             {chartData.length === 0 && !loading && !error && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 400, color: '#8b949e' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 400, color: tokens.text.muted }}>
                     <Typography>Enter expression (press Execute for results)</Typography>
                 </Box>
             )}

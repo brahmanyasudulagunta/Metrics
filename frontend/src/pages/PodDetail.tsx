@@ -5,6 +5,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import axios from 'axios';
 import API_URL from '../config';
+import { tokens } from '../theme';
 
 const PodDetail: React.FC = () => {
     const { namespace, name } = useParams<{ namespace: string, name: string }>();
@@ -59,15 +60,14 @@ const PodDetail: React.FC = () => {
 
             <Box sx={{ width: '100%', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                 <Paper sx={{
-                    bgcolor: '#0d1117',
-                    border: '1px solid #30363d',
+                    bgcolor: tokens.bg.base,
                     flexGrow: 1,
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    <Box sx={{ bgcolor: '#161b22', p: 1.5, borderBottom: '1px solid #30363d', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <TerminalIcon fontSize="small" sx={{ color: '#8b949e' }} />
-                        <Typography variant="subtitle2" sx={{ color: '#8b949e', fontFamily: 'monospace' }}>
+                    <Box sx={{ bgcolor: tokens.bg.surface, p: 1.5, borderBottom: `1px solid ${tokens.border.default}`, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TerminalIcon fontSize="small" sx={{ color: tokens.text.muted }} />
+                        <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }}>
                             Pod Logs (tail -n 100)
                         </Typography>
                     </Box>
@@ -77,7 +77,7 @@ const PodDetail: React.FC = () => {
                         flexGrow: 1,
                         fontFamily: 'monospace',
                         fontSize: '0.85rem',
-                        color: '#e6edf3',
+                        color: tokens.text.secondary,
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
                         lineHeight: 1.5

@@ -21,7 +21,6 @@ interface SystemInfo {
     processesRunning: number; processesBlocked: number;
     temperature: { value: number; status: string; available: boolean };
 }
-interface ContainerInfo { name: string; cpu: number; memory: number; }
 
 /* ── Thresholds ── */
 const THRESHOLDS = {
@@ -149,8 +148,6 @@ const Overview: React.FC = () => {
     const [diskData, setDiskData] = useState<MetricData[]>([]);
     const [rxData, setRxData] = useState<MetricData[]>([]);
     const [txData, setTxData] = useState<MetricData[]>([]);
-    const [containers, setContainers] = useState<ContainerInfo[]>([]);
-    const [k8sStats, setK8sStats] = useState({ pods: 0, deployments: 0, services: 0 });
     const [systemInfo, setSystemInfo] = useState<SystemInfo>({
         uptime: 'Loading...', load1: 0, load5: 0, load15: 0,
         processesRunning: 0, processesBlocked: 0,
@@ -169,7 +166,7 @@ const Overview: React.FC = () => {
         const step = '15s';
 
         try {
-            const [cpuRes, memRes, diskRes, rxRes, txRes, uptimeRes, loadRes, procRes, containersRes, tempRes] = await Promise.all([
+            const [cpuRes, memRes, diskRes, rxRes, txRes, uptimeRes, loadRes, procRes, tempRes] = await Promise.all([
                 axios.get(`${API_URL}/api/metrics/cpu?start=${start}&end=${end}&step=${step}`, { headers }),
                 axios.get(`${API_URL}/api/metrics/memory?start=${start}&end=${end}&step=${step}`, { headers }),
                 axios.get(`${API_URL}/api/metrics/disk?start=${start}&end=${end}&step=${step}`, { headers }),
@@ -178,12 +175,10 @@ const Overview: React.FC = () => {
                 axios.get(`${API_URL}/api/metrics/uptime`, { headers }),
                 axios.get(`${API_URL}/api/metrics/load`, { headers }),
                 axios.get(`${API_URL}/api/metrics/processes`, { headers }),
-                axios.get(`${API_URL}/api/metrics/containers`, { headers }),
                 axios.get(`${API_URL}/api/metrics/temperature`, { headers }),
             ]);
             setCpuData(cpuRes.data); setMemData(memRes.data); setDiskData(diskRes.data);
             setRxData(rxRes.data); setTxData(txRes.data);
-            setContainers(containersRes.data.containers || []);
             setSystemInfo({
                 uptime: uptimeRes.data.uptime,
                 load1: loadRes.data.load1, load5: loadRes.data.load5, load15: loadRes.data.load15,
@@ -191,21 +186,7 @@ const Overview: React.FC = () => {
                 temperature: tempRes.data,
             });
 
-            try {
-                const [k8sPodRes, k8sDepRes, k8sSvcRes] = await Promise.all([
-                    axios.get(`${API_URL}/api/metrics/pods?namespace=all`, { headers }),
-                    axios.get(`${API_URL}/api/metrics/deployments?namespace=all`, { headers }),
-                    axios.get(`${API_URL}/api/metrics/services?namespace=all`, { headers }),
-                ]);
-                setK8sStats({
-                    pods: k8sPodRes.data.pods?.length || 0,
-                    deployments: k8sDepRes.data.deployments?.length || 0,
-                    services: k8sSvcRes.data.services?.length || 0,
-                });
-            } catch {
-                // Ignore if not in K8s mode
-            }
-
+            // Removed k8s stats fallback since this is full kubernetes now
             setLastUpdated(new Date());
         } catch { setError('Failed to fetch metrics.'); }
         finally { setLoading(false); }
@@ -277,9 +258,6 @@ const Overview: React.FC = () => {
 
             {/* ── Row 2: System Stats ── */}
             <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-                {containers.length > 0 && k8sStats.pods === 0 && (
-                    <StatCard icon={<StorageIcon sx={{ fontSize: 18, color: tokens.accent.green }} />} label="Containers" value={`${containers.length}`} sub="Running" />
-                )}
                 <StatCard icon={<AccessTimeIcon sx={{ fontSize: 18, color: tokens.chart.cpu }} />} label="Uptime" value={systemInfo.uptime} />
                 <StatCard icon={<SpeedIcon sx={{ fontSize: 18, color: tokens.chart.cpu }} />} label="Load Avg" value={`${systemInfo.load1} / ${systemInfo.load5}`} sub="1 & 5 min" />
                 <StatCard icon={<SettingsIcon sx={{ fontSize: 18, color: tokens.accent.yellow }} />} label="Processes" value={`${systemInfo.processesRunning}`} sub="Running" />

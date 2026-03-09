@@ -10,6 +10,7 @@ import Kubernetes from './pages/Kubernetes';
 import PodDetail from './pages/PodDetail';
 import Optimization from './pages/Optimization';
 import Settings from './pages/Settings';
+import ApplicationHealth from './pages/ApplicationHealth';
 import { getTheme } from './theme';
 import axios from 'axios';
 import API_URL from './config';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
             {/* Protected Routes wrapped in MainLayout */}
             <Route path="/dashboard" element={isAuthenticated ? <MainLayout onLogout={handleLogout} /> : <Navigate to="/login" />}>
               <Route index element={<Overview />} />
+              <Route path="application" element={<ApplicationHealth />} />
               <Route path="explore" element={<Explore />} />
               <Route path="kubernetes" element={<Kubernetes />} />
               <Route path="kubernetes/:namespace/:name" element={<PodDetail />} />

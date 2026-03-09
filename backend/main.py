@@ -1,7 +1,11 @@
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import router as api_router
 from api.k8s import router as k8s_router
+from api.application import router as app_health_router
+from api.overview import router as overview_router
+from api.explorer import router as explorer_router
+from api.optimization import router as opt_router
+from api.auth_routes import router as auth_router
 from prometheus_fastapi_instrumentator import Instrumentator
 from db.init_db import init_db
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -30,7 +34,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
+app.include_router(app_health_router, prefix="/api")
+app.include_router(overview_router, prefix="/api")
+app.include_router(explorer_router, prefix="/api")
+app.include_router(opt_router, prefix="/api")
 app.include_router(k8s_router, prefix="/api")
 
 @app.get("/")

@@ -11,6 +11,7 @@ import SavingsIcon from '@mui/icons-material/Savings';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CloudIcon from '@mui/icons-material/Cloud';
+import NetworkCheckIcon from '@mui/icons-material/NetworkCheck';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import MetricsLogo from '../MetricsLogo';
@@ -29,6 +30,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
 
     const menuItems = [
         { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
+        { text: 'App Health', icon: <NetworkCheckIcon />, path: '/dashboard/application' },
         { text: 'Explore', icon: <ExploreIcon />, path: '/dashboard/explore' },
         { text: 'Kubernetes', icon: <CloudIcon />, path: '/dashboard/kubernetes' },
         { text: 'Optimization', icon: <SavingsIcon />, path: '/dashboard/optimization' },

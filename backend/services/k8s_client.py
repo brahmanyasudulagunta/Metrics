@@ -5,8 +5,6 @@ from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger(__name__)
 
-K8S_MODE = os.getenv("K8S_MODE", "auto")  # "incluster", "local", or "auto"
-
 class K8sClient:
     def __init__(self):
         self.api = None
@@ -15,22 +13,11 @@ class K8sClient:
         self._initialize_client()
 
     def _initialize_client(self):
-        if K8S_MODE == "incluster":
-            try:
-                config.load_incluster_config()
-                logger.info("Loaded Kubernetes in-cluster config.")
-            except Exception as e:
-                logger.error(f"Failed to load in-cluster config: {e}")
-                return
-        elif K8S_MODE == "local":
+        try:
+            config.load_incluster_config()
+            logger.info("Loaded Kubernetes in-cluster config.")
+        except config.ConfigException:
             self._load_local_config()
-        else:
-            # Auto mode: try in-cluster first, fallback to local
-            try:
-                config.load_incluster_config()
-                logger.info("Loaded Kubernetes in-cluster config.")
-            except config.ConfigException:
-                self._load_local_config()
 
         self.core_api = client.CoreV1Api()
         self.apps_api = client.AppsV1Api()

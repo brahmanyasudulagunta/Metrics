@@ -14,19 +14,22 @@ def get_apm_summary(current_user: str = Depends(get_current_user)):
         # Total Requests Per Second (RPS)
         rps_query = 'sum(irate(nginx_ingress_controller_requests[2m]))'
         rps_res = client.query(rps_query)
-        rps = float(rps_res.get("data", {}).get("result", [{"value": [0, 0]}])[0]["value"][1])
+        rps_results = rps_res.get("data", {}).get("result", [])
+        rps = float(rps_results[0]["value"][1]) if rps_results else 0.0
 
         # Global 5xx Error Rate (%)
         error_query = 'sum(irate(nginx_ingress_controller_requests{status=~"5.."}[2m])) / sum(irate(nginx_ingress_controller_requests[2m])) * 100'
         err_res = client.query(error_query)
-        err_rate = float(err_res.get("data", {}).get("result", [{"value": [0, 0]}])[0]["value"][1])
+        err_results = err_res.get("data", {}).get("result", [])
+        err_rate = float(err_results[0]["value"][1]) if err_results else 0.0
         if str(err_rate) == 'nan':
             err_rate = 0.0
 
         # Global P95 Latency (seconds -> ms)
         lat_query = 'histogram_quantile(0.95, sum(irate(nginx_ingress_controller_request_duration_seconds_bucket[2m])) by (le)) * 1000'
         lat_res = client.query(lat_query)
-        latency_ms = float(lat_res.get("data", {}).get("result", [{"value": [0, 0]}])[0]["value"][1])
+        lat_results = lat_res.get("data", {}).get("result", [])
+        latency_ms = float(lat_results[0]["value"][1]) if lat_results else 0.0
         if str(latency_ms) == 'nan':
             latency_ms = 0.0
 

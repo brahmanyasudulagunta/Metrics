@@ -97,3 +97,4 @@ spec:
             path: {{ .Values.api.hostBinaryMounts.dockerPath }}
             type: File
         {{- end }}
+      {{- end }}

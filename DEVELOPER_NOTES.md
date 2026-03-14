@@ -27,7 +27,8 @@ helm dependency update ./charts
 helm upgrade --install metrics ./charts \
   --namespace metrics \
   --create-namespace \
-  --set monitoring.enabled=true
+  --set monitoring.enabled=true \
+  --set prometheus.url="http://prometheus-server:9090"
 ```
 
 ## 4. Verification

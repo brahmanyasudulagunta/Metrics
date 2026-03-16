@@ -39,7 +39,7 @@ services:
       - /dev/kmsg
 
   backend:
-    image: ashrith2727/backend-metrics:v1
+    image: brahmanya/backend-metrics:v1
     container_name: backend-metrics
     networks:
       - default
@@ -62,7 +62,7 @@ services:
       - prometheus
 
   frontend:
-    image: ashrith2727/frontend-metrics:v1
+    image: brahmanya/frontend-metrics:v1
     container_name: frontend-metrics
     ports:
       - "3001:3001"

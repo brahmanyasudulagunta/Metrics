@@ -196,9 +196,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
                 </List>
             </Drawer>
 
-            {/* Main Content Area */}
             <Box component="main" sx={{ flexGrow: 1, pt: { xs: 9, sm: 11 } }}>
-                <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 3 }, py: 3 }}>
+                <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 }, py: 3 }}>
                     <Outlet /> {/* Renders the active nested route */}
                 </Box>
             </Box>

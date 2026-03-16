@@ -1,5 +1,5 @@
 api:
-  image: ashrith2727/backend-metrics
+  image: brahmanya/backend-metrics
   tag: "v1"
   replicas: 1
   adminPassword: admin
@@ -21,7 +21,7 @@ api:
     dockerPath: /usr/bin/docker
 
 dashboard:
-  image: ashrith2727/frontend-metrics
+  image: brahmanya/frontend-metrics
   tag: "v1"
   replicas: 1
   resources:

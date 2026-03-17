@@ -1,6 +1,6 @@
 api:
   image: brahmanya/backend-metrics
-  tag: "latest"
+  tag: "v1"
   replicas: 1
   adminPassword: admin
   jwtSecret: supersecretkey
@@ -22,7 +22,7 @@ api:
 
 dashboard:
   image: brahmanya/frontend-metrics
-  tag: "latest"
+  tag: "v1"
   replicas: 1
   resources:
     requests:
@@ -80,7 +80,7 @@ postgresql:
     database: metrics_db
   primary:
     image:
-      tag: "16"
+      tag: "latest"
     persistence:
       enabled: true
       size: 8Gi

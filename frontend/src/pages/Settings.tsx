@@ -1,17 +1,20 @@
 import React from 'react';
-import { Typography, Paper, Box, Divider, List, ListItem, ListItemText, Switch, ListItemSecondaryAction, Button } from '@mui/material';
-import { tokens } from '../theme';
+import { 
+    Typography, Paper, Box, Divider, List, ListItem, ListItemText, 
+    Switch, ListItemSecondaryAction
+} from '@mui/material';
+import AlertSettings from './AlertSettings';
 
 const Settings: React.FC = () => {
     return (
         <Box>
             <Typography variant="h5" sx={{ mb: 1 }}>Settings</Typography>
             <Typography variant="body2" sx={{ mb: 3 }}>
-                Manage your dashboard preferences and account configurations.
+                Manage your dashboard preferences and alerting configurations.
             </Typography>
 
-            <Paper sx={{ p: 3, mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>Preferences</Typography>
+            <Paper sx={{ p: 3, mb: 4 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>General Preferences</Typography>
                 <Divider sx={{ mb: 2 }} />
                 <List disablePadding>
                     <ListItem disableGutters>
@@ -28,14 +31,8 @@ const Settings: React.FC = () => {
                 </List>
             </Paper>
 
-            <Paper sx={{ p: 3 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>Alerting (Coming Soon)</Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                    Configure threshold alerts and notification channels (Email, Slack, webhook).
-                </Typography>
-                <Button variant="outlined" disabled sx={{ borderRadius: 1 }}>Configure Alerts</Button>
-            </Paper>
+            <Typography variant="subtitle2" sx={{ mb: 2 }}>Alerting</Typography>
+            <AlertSettings />
         </Box>
     );
 };

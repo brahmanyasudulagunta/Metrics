@@ -47,7 +47,15 @@ const ClusterList: React.FC<ClusterListProps> = ({ clusters, onSelectCluster }) 
                         {clusters.map(cluster => {
                             const isActive = cluster.status === "Active";
                             return (
-                                <TableRow key={cluster.id} hover sx={{ '&:hover': { bgcolor: '#161b22' } }}>
+                                <TableRow 
+                                    key={cluster.id} 
+                                    hover 
+                                    onClick={() => onSelectCluster(cluster)}
+                                    sx={{ 
+                                        cursor: 'pointer',
+                                        '&:hover': { bgcolor: '#161b22' } 
+                                    }}
+                                >
                                     <TableCell sx={{ borderBottom: '1px solid #30363d' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                             <StorageIcon sx={{ color: isActive ? tokens.accent.green : tokens.text.muted, fontSize: 20 }} />

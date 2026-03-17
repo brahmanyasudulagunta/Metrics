@@ -7,7 +7,7 @@ import ClusterList from './ClusterList';
 import ClusterOverview from './ClusterOverview';
 import NamespaceView from './NamespaceView';
 import { tokens } from '../../theme';
-import { Button, Typography, Box, CircularProgress, Alert, Breadcrumbs, Link, Snackbar, TextField, InputAdornment, useTheme } from '@mui/material';
+import { Button, Typography, Box, CircularProgress, Alert, Breadcrumbs, Link, Snackbar, TextField, InputAdornment, useTheme, Fade } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import HomeIcon from '@mui/icons-material/Home';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -80,8 +80,8 @@ const Kubernetes: React.FC = () => {
         if (cluster) {
             path += `/${cluster}`;
             if (ns && ns !== 'all') path += `/namespace/${ns}`;
-            else if (ot === '0' || (!ot && overviewTab === 0)) path += '/nodes';
-            else path += '/namespace';
+            else if (ot === '1' || (!ot && overviewTab === 1)) path += '/namespace';
+            else path += '/nodes';
         }
         setPathInput(path);
     }, [searchParams]);
@@ -146,7 +146,7 @@ const Kubernetes: React.FC = () => {
     const handleSelectCluster = (cluster: Cluster) => {
         setSelectedNs('all');
         setViewType('details');
-        setSearchParams({ ns: 'all', ot: '1', cluster: cluster.name });
+        setSearchParams({ ns: 'all', ot: '0', cluster: cluster.name });
     };
 
     const handleCreateNamespace = async (name: string) => {
@@ -251,7 +251,7 @@ const Kubernetes: React.FC = () => {
 
         if (parts.length === 2) { // clusters/{clusterName}
             setViewType('details');
-            updateParams(clusterName, 'all', 1, 0);
+            updateParams(clusterName, 'all', 0, 0);
             return;
         }
 
@@ -264,7 +264,7 @@ const Kubernetes: React.FC = () => {
         if (parts[2] === 'namespace') {
             if (parts.length === 3) { // clusters/{clusterName}/namespace
                 setViewType('details');
-                updateParams(clusterName, 'all', 1, 0);
+                updateParams(clusterName, 'all', 0, 0);
             } else { // clusters/{clusterName}/namespace/{ns}
                 const ns = parts[3];
                 const rt = parts[4] === 'deployments' ? 1 : parts[4] === 'svc' ? 2 : 0;
@@ -361,7 +361,7 @@ const Kubernetes: React.FC = () => {
                                 {selectedNs === 'all' ? (
                                     <Box sx={{ px: 1.25, py: 0.6, borderRadius: '6px', bgcolor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)' }}>
                                         <Typography sx={{ fontWeight: 600, color: tokens.accent.blue, fontSize: '0.85rem' }}>
-                                            {overviewTab === 0 ? 'nodes' : 'namespace'}
+                                            {overviewTab === 1 ? 'namespace' : 'nodes'}
                                         </Typography>
                                     </Box>
                                 ) : (
@@ -376,7 +376,7 @@ const Kubernetes: React.FC = () => {
                                         }}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            updateParams(selectedCluster, 'all', 1, 0);
+                                            updateParams(selectedCluster, 'all', 0, 0);
                                         }}
                                     >
                                         <Typography sx={{ fontSize: '0.85rem', color: '#c9d1d9' }}>namespace</Typography>
@@ -417,32 +417,36 @@ const Kubernetes: React.FC = () => {
                     </Button>
                 </Box>
             ) : (
-                selectedNs === 'all' ? (
-                <ClusterOverview 
-                    nodes={nodes} 
-                    namespaces={namespaces} 
-                    tab={overviewTab}
-                    setTab={(t) => { setOverviewTab(t); updateParams(selectedCluster, 'all', t, 0); }}
-                    formatDate={formatDate} 
-                    onSelectNamespace={handleSelectNamespace} 
-                    onCreateNamespace={handleCreateNamespace}
-                    onDeleteNamespace={handleDeleteNamespace}
-                />
-            ) : (
-                <NamespaceView 
-                    namespace={selectedNs}
-                    pods={pods}
-                    deployments={deployments}
-                    services={services}
-                    tab={resourceTab}
-                    setTab={(t) => { setResourceTab(t); updateParams(selectedCluster, selectedNs, 1, t); }}
-                    formatDate={formatDate}
-                    getStatusColor={getStatusColor}
-                    onDeletePod={handleDeletePod}
-                    onRestartDeployment={handleRestartDeployment}
-                    onScaleDeployment={handleScaleDeployment}
-                />
-            ))}
+                <Fade in={true} key={`${viewType}-${selectedNs}-${overviewTab}-${resourceTab}`}>
+                <Box>
+                    {selectedNs === 'all' ? (
+                        <ClusterOverview 
+                            nodes={nodes} 
+                            namespaces={namespaces} 
+                            tab={overviewTab}
+                            setTab={(t) => { setOverviewTab(t); updateParams(selectedCluster, 'all', t, 0); }}
+                            formatDate={formatDate} 
+                            onSelectNamespace={handleSelectNamespace} 
+                            onCreateNamespace={handleCreateNamespace}
+                            onDeleteNamespace={handleDeleteNamespace}
+                        />
+                    ) : (
+                        <NamespaceView 
+                            namespace={selectedNs}
+                            pods={pods}
+                            deployments={deployments}
+                            services={services}
+                            tab={resourceTab}
+                            setTab={(t) => { setResourceTab(t); updateParams(selectedCluster, selectedNs, 1, t); }}
+                            formatDate={formatDate}
+                            getStatusColor={getStatusColor}
+                            onDeletePod={handleDeletePod}
+                            onRestartDeployment={handleRestartDeployment}
+                            onScaleDeployment={handleScaleDeployment}
+                        />
+                    )}
+                </Box>
+            </Fade>)}
 
             <Snackbar 
                 open={snackbar.open} 

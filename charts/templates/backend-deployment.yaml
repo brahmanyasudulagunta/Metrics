@@ -48,12 +48,8 @@ spec:
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
-          {{- if or .Values.persistence.enabled .Values.api.dockerSocket.enabled .Values.api.hostBinaryMounts.enabled }}
+          {{- if or .Values.api.dockerSocket.enabled .Values.api.hostBinaryMounts.enabled }}
           volumeMounts:
-            {{- if .Values.persistence.enabled }}
-            - name: data
-              mountPath: /app/data
-            {{- end }}
             {{- if .Values.api.dockerSocket.enabled }}
             - name: docker-socket
               mountPath: {{ .Values.api.dockerSocket.path }}
@@ -70,13 +66,8 @@ spec:
               readOnly: true
             {{- end }}
           {{- end }}
-      {{- if or .Values.persistence.enabled .Values.api.dockerSocket.enabled .Values.api.hostBinaryMounts.enabled }}
+      {{- if or .Values.api.dockerSocket.enabled .Values.api.hostBinaryMounts.enabled }}
       volumes:
-        {{- if .Values.persistence.enabled }}
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-data
-        {{- end }}
         {{- if .Values.api.dockerSocket.enabled }}
         - name: docker-socket
           hostPath:

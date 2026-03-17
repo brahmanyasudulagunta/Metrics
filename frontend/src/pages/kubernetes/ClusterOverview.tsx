@@ -3,7 +3,7 @@ import {
     Box, Typography, Paper, Tabs, Tab, Table, TableBody, 
     TableCell, TableContainer, TableHead, TableRow, Button,
     IconButton, Dialog, DialogTitle, DialogContent, 
-    DialogContentText, DialogActions, TextField
+    DialogContentText, DialogActions, TextField, Fade
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -53,76 +53,80 @@ const ClusterOverview: React.FC<ClusterOverviewProps> = ({
                 </Button>
             </Box>
 
-            {tab === 0 && (
-                <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell>Roles</TableCell>
-                                <TableCell>Internal IP</TableCell>
-                                <TableCell>OS / Version</TableCell>
-                                <TableCell>Age</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {nodes.map(node => (
-                                <TableRow key={node.name} hover>
-                                    <TableCell>
-                                        <Typography sx={{ fontWeight: 500, color: tokens.accent.blue }}>{node.name}</Typography>
-                                    </TableCell>
-                                    <TableCell sx={{ color: node.status === 'Ready' ? tokens.accent.green : tokens.accent.red, fontWeight: 600 }}>{node.status}</TableCell>
-                                    <TableCell>{node.roles.join(', ')}</TableCell>
-                                    <TableCell sx={{ fontFamily: 'monospace' }}>{node.ip}</TableCell>
-                                    <TableCell sx={{ fontSize: '0.8125rem' }}>{node.os}<br /><span style={{ opacity: 0.7 }}>{node.kubelet_version}</span></TableCell>
-                                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>{formatDate(node.age)}</TableCell>
+            <Fade in={tab === 0}>
+                <Box sx={{ display: tab === 0 ? 'block' : 'none' }}>
+                    <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Status</TableCell>
+                                    <TableCell>Roles</TableCell>
+                                    <TableCell>Internal IP</TableCell>
+                                    <TableCell>OS / Version</TableCell>
+                                    <TableCell>Age</TableCell>
                                 </TableRow>
-                            ))}
-                            {nodes.length === 0 && <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4, color: tokens.text.muted }}>No nodes found.</TableCell></TableRow>}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
+                            </TableHead>
+                            <TableBody>
+                                {nodes.map(node => (
+                                    <TableRow key={node.name} hover>
+                                        <TableCell>
+                                            <Typography sx={{ fontWeight: 500, color: tokens.accent.blue }}>{node.name}</Typography>
+                                        </TableCell>
+                                        <TableCell sx={{ color: node.status === 'Ready' ? tokens.accent.green : tokens.accent.red, fontWeight: 600 }}>{node.status}</TableCell>
+                                        <TableCell>{node.roles.join(', ')}</TableCell>
+                                        <TableCell sx={{ fontFamily: 'monospace' }}>{node.ip}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.8125rem' }}>{node.os}<br /><span style={{ opacity: 0.7 }}>{node.kubelet_version}</span></TableCell>
+                                        <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>{formatDate(node.age)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {nodes.length === 0 && <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4, color: tokens.text.muted }}>No nodes found.</TableCell></TableRow>}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Box>
+            </Fade>
 
-            {tab === 1 && (
-                <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell align="right">Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {namespaces.map(ns => (
-                                <TableRow key={ns.name} hover sx={{ cursor: 'pointer' }} onClick={() => onSelectNamespace(ns.name)}>
-                                    <TableCell>
-                                        <Typography sx={{ fontWeight: 500, color: tokens.accent.blue, '&:hover': { textDecoration: 'underline' } }}>{ns.name}</Typography>
-                                    </TableCell>
-                                    <TableCell sx={{ color: ns.status === 'Active' ? tokens.accent.green : tokens.accent.red, fontWeight: 600 }}>{ns.status}</TableCell>
-                                    <TableCell align="right">
-                                        <Button 
-                                            size="small" 
-                                            color="error"
-                                            variant="contained"
-                                            onClick={(e) => { 
-                                                e.stopPropagation(); 
-                                                setDeleteNsDialog({ open: true, name: ns.name }); 
-                                            }}
-                                            sx={{ textTransform: 'none' }}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </TableCell>
+            <Fade in={tab === 1}>
+                <Box sx={{ display: tab === 1 ? 'block' : 'none' }}>
+                    <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Status</TableCell>
+                                    <TableCell align="right">Actions</TableCell>
                                 </TableRow>
-                            ))}
-                            {namespaces.length === 0 && <TableRow><TableCell colSpan={3} align="center" sx={{ py: 4, color: tokens.text.muted }}>No namespaces found.</TableCell></TableRow>}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
+                            </TableHead>
+                            <TableBody>
+                                {namespaces.map(ns => (
+                                    <TableRow key={ns.name} hover sx={{ cursor: 'pointer' }} onClick={() => onSelectNamespace(ns.name)}>
+                                        <TableCell>
+                                            <Typography sx={{ fontWeight: 500, color: tokens.accent.blue, '&:hover': { textDecoration: 'underline' } }}>{ns.name}</Typography>
+                                        </TableCell>
+                                        <TableCell sx={{ color: ns.status === 'Active' ? tokens.accent.green : tokens.accent.red, fontWeight: 600 }}>{ns.status}</TableCell>
+                                        <TableCell align="right">
+                                            <Button 
+                                                size="small" 
+                                                color="error"
+                                                variant="contained"
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    setDeleteNsDialog({ open: true, name: ns.name }); 
+                                                }}
+                                                sx={{ textTransform: 'none' }}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {namespaces.length === 0 && <TableRow><TableCell colSpan={3} align="center" sx={{ py: 4, color: tokens.text.muted }}>No namespaces found.</TableCell></TableRow>}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Box>
+            </Fade>
 
             {/* Dialogs */}
             <Dialog open={createNsDialog.open} onClose={() => setCreateNsDialog({ ...createNsDialog, open: false })}>

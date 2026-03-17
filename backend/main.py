@@ -5,6 +5,9 @@ from api.overview import router as overview_router
 from api.explorer import router as explorer_router
 from api.optimization import router as opt_router
 from api.auth_routes import router as auth_router
+from api.alerts import router as alerts_router
+from services.alert_checker import check_alerts_loop
+import asyncio
 from prometheus_fastapi_instrumentator import Instrumentator
 from db.init_db import init_db
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -25,6 +28,10 @@ app.add_middleware(SlowAPIMiddleware)
 
 init_db()
 
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(check_alerts_loop())
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins = os.getenv("CORS_ORIGINS", "*").split(","),
@@ -38,6 +45,7 @@ app.include_router(overview_router, prefix="/api")
 app.include_router(explorer_router, prefix="/api")
 app.include_router(opt_router, prefix="/api")
 app.include_router(k8s_router, prefix="/api")
+app.include_router(alerts_router, prefix="/api")
 
 @app.get("/")
 def root():

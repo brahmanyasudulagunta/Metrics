@@ -8,7 +8,10 @@ data:
   {{- else }}
   PROMETHEUS_URL: {{ .Values.prometheus.url | quote }}
   {{- end }}
-  SQLALCHEMY_DATABASE_URL: "sqlite:///data/metrics.db"
+  SQLALCHEMY_DATABASE_URL: "postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+  POSTGRES_HOST: "{{ .Release.Name }}-postgresql"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: {{ .Values.postgresql.auth.database | quote }}
   K8S_MODE: "incluster"
   CORS_ORIGINS: "*"
   JWT_ALGORITHM: "HS256"

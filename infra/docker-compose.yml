@@ -18,7 +18,14 @@ services:
       - "9100:9100"
     privileged: true
     volumes:
-      - /sys:/sys:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -51,7 +58,6 @@ services:
       - /usr/bin/docker:/usr/bin/docker:ro
       - ~/.kube:/root/.kube
       - ../backend:/app
-      - backend-data:/app/data
     env_file:
       - ../backend/.env
     environment:
@@ -60,6 +66,7 @@ services:
       - "8000:8000"
     depends_on:
       - prometheus
+      - postgres
 
   frontend:
     image: brahmanya/frontend-metrics:v1
@@ -69,8 +76,20 @@ services:
     depends_on:
       - backend
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=metrics_user
+      - POSTGRES_PASSWORD=metrics_pass
+      - POSTGRES_DB=metrics_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
 volumes:
-  backend-data:
+  postgres-data:
 
 
 networks:

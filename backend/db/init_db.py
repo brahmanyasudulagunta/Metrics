@@ -10,7 +10,6 @@ DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
 
 def init_db():
     """Create tables and seed default admin user."""
-    os.makedirs("data", exist_ok=True)
     Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()

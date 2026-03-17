@@ -37,11 +37,7 @@ dashboard:
 prometheus:
   url: "http://prometheus-server:9090"
 
-persistence:
-  enabled: true
-  size: 1Gi
-  storageClass: ""
-
+  url: "http://prometheus-server:9090"
 
 serviceAccount:
   create: true
@@ -75,5 +71,16 @@ monitoring:
       enabled: false          # don't bind to host port — prevents scheduling conflicts
   kubeStateMetrics:
     enabled: true
+
+postgresql:
+  enabled: true
+  auth:
+    username: metrics_user
+    password: metrics_password
+    database: metrics_db
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
 
 clusterName: "gitops"

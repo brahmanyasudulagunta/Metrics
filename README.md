@@ -4,11 +4,12 @@ A Kubernetes-native monitoring dashboard that provides real-time visibility into
 
 ---
 
-## Installation
+## 🚀 Installation
 
-You can install the Metrics Dashboard directly from the official Helm repository.
+Follow these steps to deploy the Metrics Dashboard to your Kubernetes cluster using Helm.
 
-### 1. Add the Helm Repository
+### 1. Prepare Environment
+Add the official repository and create a dedicated namespace.
 
 ```bash
 helm repo add metrics https://brahmanyasudulagunta.github.io/Metrics/
@@ -16,28 +17,35 @@ helm repo update
 kubectl create namespace metrics
 ```
 
-### 2. Deploy the Dashboard
+### 2. Deploy Dashboard
 
-Choose the scenario that fits your cluster:
+Choose the scenario that matches your cluster setup:
 
-#### Scenario A: You already have Prometheus installed
-If you are already running Prometheus (like the `kube-prometheus-stack`) in your cluster, point the dashboard to it.
+#### Scenario A: Fresh Cluster (Recommended)
+This installs the dashboard along with a pre-configured Prometheus stack.
+
+```bash
+helm upgrade --install metrics metrics/metrics -n metrics
+```
+
+#### Scenario B: Existing Prometheus
+If you already have Prometheus running (e.g., `kube-prometheus-stack`), point the dashboard to your existing service.
 
 ```bash
 helm upgrade --install metrics metrics/metrics \
   -n metrics \
   --set monitoring.enabled=false \
-  --set prometheus.url="http://prometheus-operated.monitoring:9090" # Replace with your Prometheus service URL
+  --set prometheus.url="http://prometheus-operated.monitoring:9090"
 ```
 
-#### Scenario B: You do NOT have Prometheus installed
-If you have a fresh cluster, the chart can automatically install a pre-configured Prometheus stack for you.
+### 3. Access the Dashboard
+Once the pods are running, use port-forwarding to access the UI:
 
 ```bash
-helm upgrade --install metrics metrics/metrics \
-  -n metrics
+kubectl port-forward svc/metrics-frontend 3001:3001 -n metrics
 ```
-*(By default, this will install the dashboard alongside a bundled `kube-prometheus-stack`)*
+You can then open the dashboard at [http://localhost:3001](http://localhost:3001).
+
 
 ---
 

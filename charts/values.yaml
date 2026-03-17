@@ -37,8 +37,6 @@ dashboard:
 prometheus:
   url: "http://prometheus-server:9090"
 
-  url: "http://prometheus-server:9090"
-
 serviceAccount:
   create: true
   name: ""

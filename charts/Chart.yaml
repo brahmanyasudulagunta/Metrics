@@ -13,6 +13,6 @@ dependencies:
     alias: monitoring
     condition: monitoring.enabled
   - name: postgresql
-    version: "15.x.x"
+    version: "16.x.x"
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled

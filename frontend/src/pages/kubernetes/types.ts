@@ -4,3 +4,11 @@ export interface Deployment { name: string; namespace: string; ready: string; ag
 export interface Service { name: string; namespace: string; type: string; cluster_ip: string; ports: string; }
 export interface Cluster { id: string; name: string; status: string; provider: string; }
 export interface NodeInfo { name: string; status: string; roles: string[]; ip: string; os: string; kubelet_version: string; age: string; }
+
+export interface PortForward {
+    local_port: string;
+    pod_name: string;
+    namespace: string;
+    remote_port: number;
+    age: number;
+}

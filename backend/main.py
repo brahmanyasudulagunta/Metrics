@@ -6,6 +6,7 @@ from api.explorer import router as explorer_router
 from api.optimization import router as opt_router
 from api.auth_routes import router as auth_router
 from api.alerts import router as alerts_router
+from api.notifications import router as notifications_router
 from services.alert_checker import check_alerts_loop
 import asyncio
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -46,6 +47,7 @@ app.include_router(explorer_router, prefix="/api")
 app.include_router(opt_router, prefix="/api")
 app.include_router(k8s_router, prefix="/api")
 app.include_router(alerts_router, prefix="/api")
+app.include_router(notifications_router, prefix="/api")
 
 @app.get("/")
 def root():

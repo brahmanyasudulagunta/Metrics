@@ -467,3 +467,33 @@ class K8sClient:
             return {"success": True, "message": f"Deployment {name} resources updated"}
         except ApiException as e:
             return {"error": str(e)}
+
+    def get_pod_for_service(self, name, namespace="default"):
+        """Finds a running pod associated with the given service."""
+        if not self.is_connected(): return {"error": "Native K8s client not configured."}
+        try:
+            # 1. Get the service to find its selector
+            service = self.core_api.read_namespaced_service(name=name, namespace=namespace)
+            selector = service.spec.selector
+            
+            if not selector:
+                return {"error": "Service has no selector labels. Cannot automatically find pod."}
+                
+            # Convert selector dictionary to string format "key=value,key2=value2"
+            label_selector = ",".join([f"{k}={v}" for k, v in selector.items()])
+            
+            # 2. Query pods using the label selector
+            pods = self.core_api.list_namespaced_pod(namespace=namespace, label_selector=label_selector)
+            
+            if not pods.items:
+                return {"error": f"No pods found matching service selector: {label_selector}"}
+                
+            # 3. Find the first running pod
+            for pod in pods.items:
+                if pod.status.phase == "Running":
+                    return {"success": True, "pod_name": pod.metadata.name}
+                    
+            return {"error": "Found pods for service, but none are in 'Running' state."}
+            
+        except ApiException as e:
+            return {"error": str(e)}

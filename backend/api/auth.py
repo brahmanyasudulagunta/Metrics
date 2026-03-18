@@ -1,7 +1,8 @@
 from jose import jwt, ExpiredSignatureError
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 import os
 
 SECRET = os.getenv("JWT_SECRET", "devsecret")
@@ -16,14 +17,20 @@ def create_access_token(data: dict):
     return encoded
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    token_query: Optional[str] = Query(None, alias="token")
+):
+    actual_token = token or token_query
+    if not actual_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
     try:
-        payload = jwt.decode(token, SECRET, algorithms=[ALGO])
+        payload = jwt.decode(actual_token, SECRET, algorithms=[ALGO])
         return payload.get("sub")
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
-

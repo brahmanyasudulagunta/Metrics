@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box, AppBar, Toolbar, Typography, Button, IconButton, Divider,
     Tooltip as MuiTooltip, Drawer, List, ListItemButton, ListItemIcon,
@@ -13,19 +13,94 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import CloudIcon from '@mui/icons-material/Cloud';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import Popover from '@mui/material/Popover';
+import Badge from '@mui/material/Badge';
+import axios from 'axios';
 import MetricsLogo from '../MetricsLogo';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+interface PortForward {
+    local_port: string;
+    pod_name: string;
+    namespace: string;
+    remote_port: number;
+    age: number;
+}
+
+interface Alert {
+    id: string;
+    title: string;
+    message: string;
+    level: string;
+}
 
 interface MainLayoutProps {
     onLogout: () => void;
 }
-
 const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [drawerOpen, setDrawerOpen] = useState(false);
+    
+    const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+    const notificationsOpen = Boolean(anchorEl);
+    
+    // Fetch generic notifications
+    const [forwards, setForwards] = useState<PortForward[]>([]);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+    
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await axios.get(`${API_URL}/api/metrics/notifications`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setForwards(res.data.forwards || []);
+                setAlerts(res.data.alerts || []);
+            } catch (err) {
+                console.error("Failed to fetch notifications", err);
+            }
+        };
+        
+        // Fetch immediately, then poll
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleDismissNotification = async (type: string, id: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // prevent link click
+        if (type === 'port_forward') {
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    await axios.post(`${API_URL}/api/metrics/port-forward/stop/${id}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setForwards(prev => prev.filter(f => f.local_port !== id));
+                }
+            } catch (err) {
+                console.error("Failed to stop port forward.", err);
+            }
+        } else if (type === 'alert') {
+            // Future placeholder for alert dismissal endpoint
+            setAlerts(prev => prev.filter(a => a.id !== id));
+        }
+    };
+
+    const notifications = [
+        ...alerts.map(a => ({ type: 'alert', id: a.id, data: a })),
+        ...forwards.map(f => ({ type: 'port_forward', id: f.local_port, data: f }))
+    ];
 
     const menuItems = [
         { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
@@ -102,6 +177,73 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
 
                     {/* Right: Actions */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MuiTooltip title="Notifications">
+                            <IconButton 
+                                size="small" 
+                                sx={{ color: notifications.length > 0 ? '#58a6ff' : '#8b949e' }}
+                                onClick={(e) => setAnchorEl(e.currentTarget)}
+                            >
+                                <Badge badgeContent={notifications.length} color="error" variant="dot">
+                                    <NotificationsIcon fontSize="small" />
+                                </Badge>
+                            </IconButton>
+                        </MuiTooltip>
+
+                        <Popover
+                            open={notificationsOpen}
+                            anchorEl={anchorEl}
+                            onClose={() => setAnchorEl(null)}
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                            transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                            PaperProps={{
+                                sx: { mt: 1.5, width: 340, bgcolor: '#161b22', border: '1px solid #30363d', backgroundImage: 'none' }
+                            }}
+                        >
+                            <Box sx={{ p: 2, borderBottom: '1px solid #30363d', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <NotificationsIcon sx={{ color: '#8b949e', fontSize: 20 }} />
+                                <Typography sx={{ fontWeight: 600, fontSize: '0.95rem' }}>Notifications</Typography>
+                            </Box>
+                            
+                            <List sx={{ p: 0, maxHeight: 300, overflow: 'auto' }}>
+                                {notifications.length === 0 ? (
+                                    <ListItemText sx={{ p: 3, textAlign: 'center', color: '#8b949e' }} primary="No active notifications." />
+                                ) : (
+                                    notifications.map((notif) => (
+                                        <ListItemButton 
+                                            key={`${notif.type}-${notif.id}`}
+                                            onClick={() => {
+                                                if (notif.type === 'port_forward') {
+                                                    const token = localStorage.getItem('token') || '';
+                                                    window.open(`${API_URL}/api/metrics/proxy/${notif.id}/?token=${token}`, '_blank');
+                                                    setAnchorEl(null);
+                                                }
+                                            }}
+                                            sx={{ borderBottom: '1px solid #21262d', '&:hover': { bgcolor: '#21262d' }, pr: 1 }}
+                                        >
+                                            <ListItemIcon sx={{ minWidth: 36 }}>
+                                                {notif.type === 'port_forward' ? <AccountTreeIcon sx={{ color: '#3fb950', fontSize: 20 }} /> : <NotificationsIcon sx={{ color: '#d29922', fontSize: 20 }} />}
+                                            </ListItemIcon>
+                                            <ListItemText 
+                                                primary={notif.type === 'port_forward' ? `Port Forward: ${(notif.data as PortForward).pod_name}` : (notif.data as Alert).title}
+                                                secondary={notif.type === 'port_forward' ? `${(notif.data as PortForward).remote_port} via Proxy` : (notif.data as Alert).message}
+                                                primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
+                                                secondaryTypographyProps={{ fontSize: '0.75rem', fontFamily: notif.type === 'port_forward' ? 'monospace' : 'inherit', color: '#8b949e' }}
+                                            />
+                                            <MuiTooltip title="Dismiss">
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={(e) => handleDismissNotification(notif.type, notif.id, e)}
+                                                    sx={{ color: '#8b949e', '&:hover': { color: '#f85149', bgcolor: 'rgba(248,81,73,0.1)' } }}
+                                                >
+                                                    <CloseIcon fontSize="small" />
+                                                </IconButton>
+                                            </MuiTooltip>
+                                        </ListItemButton>
+                                    ))
+                                )}
+                            </List>
+                        </Popover>
+
                         <MuiTooltip title="Settings">
                             <IconButton size="small" sx={{ color: '#8b949e' }} onClick={() => navigate('/dashboard/settings')}>
                                 <SettingsIcon fontSize="small" />

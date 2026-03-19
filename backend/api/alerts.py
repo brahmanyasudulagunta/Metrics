@@ -21,6 +21,7 @@ class AlertRuleBase(BaseModel):
     threshold: float
     condition: str = "above"
     duration: str = "1m"
+    severity: str = "warning"
     notification_channels: List[str] = []
     is_enabled: bool = True
 
@@ -33,6 +34,7 @@ class AlertRuleUpdate(BaseModel):
     threshold: float = None
     condition: str = None
     duration: str = None
+    severity: str = None
     notification_channels: List[str] = None
     is_enabled: bool = None
 
@@ -56,11 +58,22 @@ class FiredAlertSchema(BaseModel):
     threshold: float
     condition: str
     labels: dict
+    is_acknowledged: bool
     fired_at: datetime
     resolved_at: Optional[datetime]
 
     class Config:
         from_attributes = True
+
+@router.post("/alerts/acknowledge/{fired_alert_id}")
+def acknowledge_alert(fired_alert_id: int, db: Session = Depends(get_db)):
+    db_fired = db.query(FiredAlert).filter(FiredAlert.id == fired_alert_id).first()
+    if not db_fired:
+        raise HTTPException(status_code=404, detail="Fired alert not found")
+    
+    db_fired.is_acknowledged = True
+    db.commit()
+    return {"detail": "Alert acknowledged"}
 
 @router.get("/alerts", response_model=List[AlertRuleSchema])
 def list_alerts(db: Session = Depends(get_db)):

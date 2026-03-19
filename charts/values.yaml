@@ -24,13 +24,13 @@ dashboard:
   image: brahmanya/frontend-metrics
   tag: "v1"
   replicas: 1
+  serviceType: ClusterIP
   resources:
     requests:
       cpu: 50m
       memory: 64Mi
     limits:
       memory: 128Mi
-
 
 # External Prometheus (used when monitoring.enabled=false)
 # Set this to your existing Prometheus URL

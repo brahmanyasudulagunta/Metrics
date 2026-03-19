@@ -1,9 +1,9 @@
 ---
 apiVersion: v2
 name: metrics
-description: A Kubernetes-native monitoring dashboard with Prometheus metrics and live cluster visibility
+description: A cloud-inspired monitoring dashboard with Prometheus alerts, user activity auditing, and live cluster visibility
 type: application
-version: "0.1.5"
+version: "0.1.6"
 appVersion: "1.1.6"
 
 dependencies:

@@ -19,6 +19,7 @@ class AlertRule(Base):
     threshold = Column(Float)
     condition = Column(String, default="above") # 'above', 'below'
     duration = Column(String, default="1m") # e.g. '5m'
+    severity = Column(String, default="warning") # 'info', 'warning', 'critical'
     notification_channels = Column(JSON, default=[]) # e.g. ["email", "slack", "webhook"]
     is_enabled = Column(Boolean, default=True)
     is_firing = Column(Boolean, default=False)
@@ -38,5 +39,17 @@ class FiredAlert(Base):
     threshold = Column(Float)
     condition = Column(String)
     labels = Column(JSON)
+    is_acknowledged = Column(Boolean, default=False)
     fired_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
+
+class ActionLog(Base):
+    __tablename__ = "action_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String)
+    action_type = Column(String) # CREATE, DELETE, RESTART, SCALE
+    resource_type = Column(String) # Namespace, Pod, Deployment
+    resource_name = Column(String)
+    namespace = Column(String, nullable=True)
+    details = Column(String, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)

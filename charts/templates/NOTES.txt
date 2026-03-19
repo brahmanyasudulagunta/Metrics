@@ -1,0 +1,27 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Dashboard URL:
+{{- if contains "NodePort" .Values.dashboard.serviceType }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Release.Name }}-dashboard)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.dashboard.serviceType }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status by running 'kubectl get svc -w {{ .Release.Name }}-dashboard'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Release.Name }}-dashboard --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:3001
+{{- else }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Release.Name }}-dashboard" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:3001 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 3001:3001
+{{- end }}
+
+Default Credentials:
+  Username: admin
+  Password: {{ .Values.api.adminPassword }}
+
+Features:
+- 🚀 Cloud-Inspired Alerting: Monitor your cluster via the new Notification Hub.
+- 📋 Activity Audit Logs: Track cluster changes (Scale, Delete, Restart) in real-time.
+
+Happy Monitoring!

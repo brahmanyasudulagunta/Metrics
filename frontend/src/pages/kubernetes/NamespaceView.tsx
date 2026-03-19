@@ -9,7 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import LaunchIcon from '@mui/icons-material/Launch';
-import { Pod, Deployment, Service, PortForward } from './types';
+import { Pod, Deployment, Service } from './types';
 import { tokens } from '../../theme';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -40,72 +40,6 @@ const NamespaceView: React.FC<NamespaceViewProps> = ({
     const [restartDepDialog, setRestartDepDialog] = useState<{ open: boolean, dep: Deployment | null }>({ open: false, dep: null });
     const [scaleDepDialog, setScaleDepDialog] = useState<{ open: boolean, dep: Deployment | null, replicas: string }>({ open: false, dep: null, replicas: '' });
     
-    // Port Forward State
-    const [forwards, setForwards] = useState<PortForward[]>([]);
-    const [portForwardDialog, setPortForwardDialog] = useState<{ 
-        open: boolean, 
-        podName: string,
-        serviceName: string,
-        namespace: string,
-        remotePort: string, 
-        localPort: string,
-        loading: boolean,
-        error: string
-    }>({ 
-        open: false, 
-        podName: '',
-        serviceName: '',
-        namespace: '',
-        remotePort: '', 
-        localPort: '',
-        loading: false,
-        error: ''
-    });
-
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
-
-    const fetchForwards = async () => {
-        try {
-            const res = await axios.get(`${API_URL}/api/metrics/port-forward/list`, { headers });
-            setForwards(res.data.forwards || []);
-        } catch (err) {}
-    };
-
-    React.useEffect(() => {
-        fetchForwards();
-        const interval = setInterval(fetchForwards, 5000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const handleStartPortForward = async () => {
-        setPortForwardDialog(prev => ({ ...prev, loading: true, error: '' }));
-        try {
-            await axios.post(`${API_URL}/api/metrics/port-forward/start`, {
-                namespace: portForwardDialog.namespace,
-                pod_name: portForwardDialog.podName || undefined,
-                service_name: portForwardDialog.serviceName || undefined,
-                remote_port: parseInt(portForwardDialog.remotePort, 10),
-                local_port: portForwardDialog.localPort
-            }, { headers });
-            setPortForwardDialog(prev => ({ ...prev, open: false, loading: false }));
-            fetchForwards();
-        } catch (err: any) {
-            setPortForwardDialog(prev => ({ 
-                ...prev, 
-                loading: false, 
-                error: err.response?.data?.detail || 'Failed to start port forward.' 
-            }));
-        }
-    };
-
-    const handleStopPortForward = async (localPort: string) => {
-        try {
-            await axios.post(`${API_URL}/api/metrics/port-forward/stop/${localPort}`, {}, { headers });
-            fetchForwards();
-        } catch (err) {}
-    };
-
     const handleDeletePod = async () => {
         if (deletePodDialog.pod) {
             await onDeletePod(deletePodDialog.pod);
@@ -165,15 +99,6 @@ const NamespaceView: React.FC<NamespaceViewProps> = ({
                                         <TableCell align="left" onClick={(e) => e.stopPropagation()}>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Button size="small" color="error" variant="contained" onClick={() => setDeletePodDialog({ open: true, pod })} sx={{ textTransform: 'none' }}>Delete</Button>
-                                                {(() => {
-                                                    const active = forwards.find(f => f.pod_name === pod.name && f.namespace === pod.namespace);
-                                                    if (active) {
-                                                        return (
-                                                            <Button size="small" variant="contained" color="inherit" onClick={() => handleStopPortForward(active.local_port)} sx={{ textTransform: 'none', bgcolor: '#30363d' }}>Stop</Button>
-                                                        );
-                                                    }
-                                                    return <Button size="small" variant="contained" color="primary" onClick={() => setPortForwardDialog({ ...portForwardDialog, open: true, podName: pod.name, serviceName: '', namespace: pod.namespace, remotePort: '80', localPort: '8080' })} sx={{ textTransform: 'none' }}>Forward</Button>;
-                                                })()}
                                             </Box>
                                         </TableCell>
                                     </TableRow>
@@ -245,24 +170,7 @@ const NamespaceView: React.FC<NamespaceViewProps> = ({
                                             ))}
                                         </TableCell>
                                         <TableCell align="left" onClick={(e) => e.stopPropagation()}>
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                {s.ports.split(', ').map((p, idx) => {
-                                                    const portNum = p.split(':')[1]?.split('/')[0] || p.split(':')[0];
-                                                    const active = forwards.find(f => f.namespace === s.namespace && f.remote_port === parseInt(portNum, 10)); // Simplified pod matching for SVC
-                                                    
-                                                    return (
-                                                        <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: '24px' }}>
-                                                            {!active ? (
-                                                                <Button size="small" sx={{ minWidth: 0, p: '4px 10px', fontSize: '0.8125rem', textTransform: 'none' }} variant="contained" color="primary" onClick={() => {
-                                                                    setPortForwardDialog({ ...portForwardDialog, open: true, namespace: s.namespace, remotePort: portNum, localPort: portNum, podName: '', serviceName: s.name, error: '' });
-                                                                }}>Forward</Button>
-                                                            ) : (
-                                                                <Button size="small" variant="contained" color="inherit" onClick={() => handleStopPortForward(active.local_port)} sx={{ textTransform: 'none', p: '4px 10px', fontSize: '0.8125rem', bgcolor: '#30363d' }}>Stop</Button>
-                                                            )}
-                                                        </Box>
-                                                    );
-                                                })}
-                                            </Box>
+                                            <Typography variant="body2" sx={{ color: tokens.text.muted }}>Internal Only</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -308,65 +216,6 @@ const NamespaceView: React.FC<NamespaceViewProps> = ({
                 </DialogActions>
             </Dialog>
 
-            {/* Port Forward Dialog */}
-            <Dialog open={portForwardDialog.open} onClose={() => setPortForwardDialog({ ...portForwardDialog, open: false })} maxWidth="xs" fullWidth>
-                <DialogTitle>Port Forward {portForwardDialog.serviceName ? 'Service' : 'Pod'}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ mb: 2 }}>
-                        Access {portForwardDialog.serviceName ? `service` : `pod`} <strong>{portForwardDialog.serviceName || portForwardDialog.podName || '...'}</strong> from the dashboard.
-                    </DialogContentText>
-                    
-                    {portForwardDialog.error && <Typography color="error" sx={{ mb: 2, fontSize: '0.85rem' }}>{portForwardDialog.error}</Typography>}
-                    
-                    {!portForwardDialog.podName && !portForwardDialog.serviceName && (
-                        <TextField
-                            label="Pod Name"
-                            fullWidth
-                            variant="outlined"
-                            margin="normal"
-                            value={portForwardDialog.podName}
-                            onChange={(e) => setPortForwardDialog({ ...portForwardDialog, podName: e.target.value })}
-                        />
-                    )}
-
-                    <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                        <TextField
-                            label="Remote Port"
-                            type="number"
-                            fullWidth
-                            variant="outlined"
-                            value={portForwardDialog.remotePort}
-                            onChange={(e) => setPortForwardDialog({ ...portForwardDialog, remotePort: e.target.value })}
-                            helperText="Port inside the pod"
-                        />
-                        <TextField
-                            label="Local Port"
-                            type="number"
-                            fullWidth
-                            variant="outlined"
-                            value={portForwardDialog.localPort}
-                            onChange={(e) => setPortForwardDialog({ ...portForwardDialog, localPort: e.target.value })}
-                            helperText="Port on localhost"
-                        />
-                    </Box>
-                    
-                    <Typography variant="caption" sx={{ mt: 2, display: 'block', color: tokens.text.muted }}>
-                        The {portForwardDialog.serviceName ? `service` : `pod`} will be accessible at: <br/>
-                        <code>http://localhost:{portForwardDialog.localPort || '<port>'}</code>
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setPortForwardDialog({ ...portForwardDialog, open: false })} color="inherit">Cancel</Button>
-                    <Button 
-                        onClick={handleStartPortForward} 
-                        color="primary" 
-                        variant="contained" 
-                        disabled={portForwardDialog.loading || !(portForwardDialog.podName || portForwardDialog.serviceName) || !portForwardDialog.remotePort || !portForwardDialog.localPort}
-                    >
-                        {portForwardDialog.loading ? 'Starting...' : 'Start Forwarding'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Box>
     );
 };

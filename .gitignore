@@ -1,6 +1,19 @@
-
+# Node / Frontend
 node_modules/
-backend/.env
-frontend/.env
+frontend/dist/
+frontend/build/
+
+# Python
 __pycache__/
 *.pyc
+backend/.env
+frontend/.env
+
+# Helm cleanup
+charts/charts/*.tgz
+charts/charts/*.prov
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/

@@ -39,7 +39,6 @@ async def evaluate_alert(alert: AlertRule, db: Session):
 
         if data:
             # For simplicity, we take the most extreme value if multiple results exist
-            # Or just the first one if it matches the threshold
             for item in data:
                 val = float(item["value"][1])
                 match = False
@@ -50,26 +49,44 @@ async def evaluate_alert(alert: AlertRule, db: Session):
                 
                 if match:
                     is_firing = True
-                    current_value = val # Update to the value that triggered it
+                    current_value = val 
                     firing_labels = item.get("metric", {})
-                    break # We found at least one firing instance
+                    break 
 
         # Update AlertRule state in the database
         alert.last_checked_at = datetime.utcnow()
-        
-        # Check for state transition
         was_firing = alert.is_firing
         alert.is_firing = is_firing
         alert.last_value = current_value if is_firing else (float(data[0]["value"][1]) if data else None)
         
         if is_firing:
-            # Only update the timestamp if it's a NEW firing event
+            # Lifecycle: Check for existing open alert
             if not was_firing:
                 alert.last_fired_at = datetime.utcnow()
+                # Create a new FiredAlert entry
+                new_fired = FiredAlert(
+                    alert_rule_id=alert.id,
+                    alert_name=alert.name,
+                    value=current_value,
+                    threshold=alert.threshold,
+                    condition=alert.condition,
+                    labels=firing_labels,
+                    fired_at=datetime.utcnow()
+                )
+                db.add(new_fired)
             alert.firing_details = firing_labels
             logger.warning(f"ALERT FIRING: {alert.name} - Val: {current_value} Threshold: {alert.threshold}")
         else:
-            alert.firing_details = {} # Clear labels when OK
+            # Lifecycle: Resolve existing open alert
+            if was_firing:
+                open_alert = db.query(FiredAlert).filter(
+                    FiredAlert.alert_rule_id == alert.id,
+                    FiredAlert.resolved_at == None
+                ).first()
+                if open_alert:
+                    open_alert.resolved_at = datetime.utcnow()
+                    db.add(open_alert)
+            alert.firing_details = {} 
         
         db.add(alert)
         db.commit()

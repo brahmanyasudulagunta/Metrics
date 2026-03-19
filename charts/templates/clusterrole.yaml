@@ -5,10 +5,10 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["namespaces", "pods", "services", "events", "nodes"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["get"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]

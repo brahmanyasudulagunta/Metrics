@@ -133,7 +133,18 @@ const ClusterOverview: React.FC<ClusterOverviewProps> = ({
                 <DialogTitle>Create New Namespace</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>Enter a name for the new Kubernetes namespace.</DialogContentText>
-                    <TextField autoFocus margin="dense" label="Namespace Name" fullWidth variant="outlined" value={createNsDialog.name} onChange={(e) => setCreateNsDialog({ ...createNsDialog, name: e.target.value })} />
+                    <TextField 
+                        autoFocus 
+                        margin="dense" 
+                        label="Namespace Name" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={createNsDialog.name} 
+                        onChange={(e) => setCreateNsDialog({ ...createNsDialog, name: e.target.value })} 
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleCreateNs();
+                        }}
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setCreateNsDialog({ ...createNsDialog, open: false })} color="inherit">Cancel</Button>

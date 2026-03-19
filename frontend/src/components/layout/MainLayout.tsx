@@ -23,7 +23,7 @@ import axios from 'axios';
 import MetricsLogo from '../MetricsLogo';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import API_URL from '../../config';
 
 interface Alert {
     id: string;
@@ -62,7 +62,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) return;
-                const res = await axios.get(`${API_URL}/api/metrics/notifications`, {
+                const res = await axios.get(`${API_URL}/api/notifications`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setAlertNotifications(res.data.alerts || []);

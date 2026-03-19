@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.get("/metrics/notifications")
+@router.get("/notifications")
 def get_notifications(
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db)

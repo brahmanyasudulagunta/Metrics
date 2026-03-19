@@ -208,7 +208,20 @@ const NamespaceView: React.FC<NamespaceViewProps> = ({
                 <DialogTitle>Scale Deployment</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>Enter new replica count for deployment <strong>{scaleDepDialog.dep?.name}</strong>:</DialogContentText>
-                    <TextField autoFocus margin="dense" label="Replicas" type="number" fullWidth variant="outlined" value={scaleDepDialog.replicas} onChange={(e) => setScaleDepDialog({ ...scaleDepDialog, replicas: e.target.value })} inputProps={{ min: 0 }} />
+                    <TextField 
+                        autoFocus 
+                        margin="dense" 
+                        label="Replicas" 
+                        type="number" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={scaleDepDialog.replicas} 
+                        onChange={(e) => setScaleDepDialog({ ...scaleDepDialog, replicas: e.target.value })} 
+                        inputProps={{ min: 0 }} 
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleScaleDep();
+                        }}
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setScaleDepDialog({ ...scaleDepDialog, open: false })} color="inherit">Cancel</Button>

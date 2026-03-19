@@ -59,7 +59,7 @@ const ChangePassword: React.FC = () => {
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                <Box component="form" noValidate>
+                <Box component="form" noValidate onSubmit={(e) => { e.preventDefault(); handleChange(); }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>New Password</Typography>
                     <TextField
                         fullWidth
@@ -84,7 +84,7 @@ const ChangePassword: React.FC = () => {
                     <Button
                         fullWidth
                         variant="contained"
-                        onClick={handleChange}
+                        type="submit"
                         sx={{
                             bgcolor: tokens.accent.yellow,
                             color: tokens.bg.base,

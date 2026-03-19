@@ -27,10 +27,12 @@ async def evaluate_alert(alert: AlertRule, db: Session):
     """Evaluate a single alert rule and update its firing status."""
     try:
         # Simple query - Prometheus returns current value for scalar queries
+        logger.info(f"[Alert: {alert.name}] Querying: {alert.metric_query}")
         result = prom.query(alert.metric_query)
         
         # Check if we have results
         data = result.get("data", {}).get("result", [])
+        logger.info(f"[Alert: {alert.name}] Raw result: {data}")
         
         # Determine firing status
         is_firing = False
@@ -40,30 +42,58 @@ async def evaluate_alert(alert: AlertRule, db: Session):
         if data:
             # For simplicity, we take the most extreme value if multiple results exist
             for item in data:
-                val = float(item["value"][1])
+                try:
+                    val = float(item["value"][1])
+                except (ValueError, IndexError):
+                    logger.error(f"[Alert: {alert.name}] Could not parse value: {item.get('value')}")
+                    continue
+
                 match = False
-                if alert.condition == "above" and val > alert.threshold:
+                condition = alert.condition.lower().strip()
+                
+                # Evaluation logic supporting words and symbols
+                if condition in ["above", ">"] and val > alert.threshold:
                     match = True
-                elif alert.condition == "below" and val < alert.threshold:
+                elif condition in ["below", "<"] and val < alert.threshold:
+                    match = True
+                elif condition == ">=" and val >= alert.threshold:
+                    match = True
+                elif condition == "<=" and val <= alert.threshold:
+                    match = True
+                elif condition == "==" and val == alert.threshold:
+                    match = True
+                elif condition == "!=" and val != alert.threshold:
                     match = True
                 
                 if match:
                     is_firing = True
                     current_value = val 
                     firing_labels = item.get("metric", {})
+                    logger.warning(f"[Alert: {alert.name}] MATCH: {val} {condition} {alert.threshold}")
                     break 
 
         # Update AlertRule state in the database
         alert.last_checked_at = datetime.utcnow()
-        was_firing = alert.is_firing
         alert.is_firing = is_firing
-        alert.last_value = current_value if is_firing else (float(data[0]["value"][1]) if data else None)
+        # Even if not firing, store the most recent value from data if available
+        if is_firing:
+            alert.last_value = current_value
+        elif data:
+            try:
+                alert.last_value = float(data[0]["value"][1])
+            except:
+                pass
         
         if is_firing:
-            # Lifecycle: Check for existing open alert
-            if not was_firing:
+            # Ensure an active (unresolved) FiredAlert exists
+            active_alert = db.query(FiredAlert).filter(
+                FiredAlert.alert_rule_id == alert.id,
+                FiredAlert.resolved_at == None
+            ).first()
+
+            if not active_alert:
+                logger.warning(f"[Alert: {alert.name}] Creating NEW FiredAlert record.")
                 alert.last_fired_at = datetime.utcnow()
-                # Create a new FiredAlert entry
                 new_fired = FiredAlert(
                     alert_rule_id=alert.id,
                     alert_name=alert.name,
@@ -71,26 +101,34 @@ async def evaluate_alert(alert: AlertRule, db: Session):
                     threshold=alert.threshold,
                     condition=alert.condition,
                     labels=firing_labels,
+                    is_acknowledged=False,
                     fired_at=datetime.utcnow()
                 )
                 db.add(new_fired)
+            else:
+                # Update existing active alert with latest value (optional but helpful)
+                active_alert.value = current_value
+                db.add(active_alert)
+            
             alert.firing_details = firing_labels
-            logger.warning(f"ALERT FIRING: {alert.name} - Val: {current_value} Threshold: {alert.threshold}")
         else:
-            # Lifecycle: Resolve existing open alert
-            if was_firing:
-                open_alert = db.query(FiredAlert).filter(
-                    FiredAlert.alert_rule_id == alert.id,
-                    FiredAlert.resolved_at == None
-                ).first()
-                if open_alert:
+            # Resolve any existing open alerts for this rule
+            open_alerts = db.query(FiredAlert).filter(
+                FiredAlert.alert_rule_id == alert.id,
+                FiredAlert.resolved_at == None
+            ).all()
+            
+            if open_alerts:
+                logger.info(f"[Alert: {alert.name}] Resolving {len(open_alerts)} active records.")
+                for open_alert in open_alerts:
                     open_alert.resolved_at = datetime.utcnow()
                     db.add(open_alert)
+            
             alert.firing_details = {} 
         
         db.add(alert)
         db.commit()
             
     except Exception as e:
-        logger.error(f"Error evaluating alert {alert.name}: {e}")
+        logger.error(f"[Alert: {alert.name}] Critical error in evaluation: {e}")
         db.rollback()

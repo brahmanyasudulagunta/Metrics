@@ -9,6 +9,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+@router.post("/acknowledge-action/{action_id}")
+def acknowledge_action(
+    action_id: int,
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Mark an action log as acknowledged/dismissed."""
+    action = db.query(ActionLog).filter(ActionLog.id == action_id).first()
+    if not action:
+        raise HTTPException(status_code=404, detail="Action log not found")
+    
+    action.is_acknowledged = True
+    db.commit()
+    return {"status": "success"}
+
 @router.get("/notifications")
 def get_notifications(
     current_user: str = Depends(get_current_user),
@@ -37,12 +52,15 @@ def get_notifications(
                 "fired_at": fired.fired_at.isoformat()
             })
         
-        # Fetch recent actions (last 10)
-        recent_actions = db.query(ActionLog).order_by(ActionLog.timestamp.desc()).limit(10).all()
+        # Fetch recent actions (hidden which are already acknowledged)
+        recent_actions = db.query(ActionLog).filter(
+            ActionLog.is_acknowledged == False
+        ).order_by(ActionLog.timestamp.desc()).limit(10).all()
+        
         actions = []
         for a in recent_actions:
             actions.append({
-                "id": f"action-{a.id}",
+                "id": str(a.id), # Use raw ID for easier acknowledge call
                 "title": f"{a.action_type} {a.resource_type}",
                 "message": f"{a.resource_name} in {a.namespace or 'cluster'} by {a.user_email}",
                 "details": a.details,

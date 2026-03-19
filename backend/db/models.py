@@ -52,4 +52,5 @@ class ActionLog(Base):
     resource_name = Column(String)
     namespace = Column(String, nullable=True)
     details = Column(String, nullable=True)
+    is_acknowledged = Column(Boolean, default=False)
     timestamp = Column(DateTime, default=datetime.utcnow)

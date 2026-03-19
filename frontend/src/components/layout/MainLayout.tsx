@@ -92,6 +92,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
             } catch (err) {
                 console.error("Failed to acknowledge alert.", err);
             }
+        } else if (type === 'action') {
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    await axios.post(`${API_URL}/api/notifications/acknowledge-action/${id}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setActionNotifications(prev => prev.filter(a => a.id !== id));
+                }
+            } catch (err) {
+                console.error("Failed to acknowledge action.", err);
+            }
         }
     };
 
@@ -233,17 +245,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onLogout }) => {
                                                 primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}
                                                 secondaryTypographyProps={{ fontSize: '0.75rem', color: '#8b949e' }}
                                             />
-                                            {notif.type === 'alert' && (
-                                                <MuiTooltip title="Acknowledge">
-                                                    <IconButton 
-                                                        size="small" 
-                                                        onClick={(e) => handleDismissNotification(notif.type, notif.id, e)}
-                                                        sx={{ color: '#8b949e', '&:hover': { color: '#f85149', bgcolor: 'rgba(248,81,73,0.1)' } }}
-                                                    >
-                                                        <CloseIcon fontSize="small" />
-                                                    </IconButton>
-                                                </MuiTooltip>
-                                            )}
+                                            <MuiTooltip title="Dismiss">
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={(e) => handleDismissNotification(notif.type, notif.id, e)}
+                                                    sx={{ color: '#8b949e', '&:hover': { color: '#f85149', bgcolor: 'rgba(248,81,73,0.1)' } }}
+                                                >
+                                                    <CloseIcon fontSize="small" />
+                                                </IconButton>
+                                            </MuiTooltip>
                                         </ListItemButton>
                                     ))
                                 )}

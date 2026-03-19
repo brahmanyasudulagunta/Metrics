@@ -8,9 +8,25 @@ logger = logging.getLogger(__name__)
 
 DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
 
+import time
+from sqlalchemy.exc import OperationalError
+
 def init_db():
-    """Create tables and seed default admin user."""
-    Base.metadata.create_all(bind=engine)
+    """Create tables and seed default admin user with retries for DB readiness."""
+    max_retries = 10
+    retry_interval = 5
+    
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Connecting to database (attempt {attempt + 1}/{max_retries})...")
+            Base.metadata.create_all(bind=engine)
+            break
+        except OperationalError as e:
+            if attempt == max_retries - 1:
+                logger.error("Could not connect to database after maximum retries.")
+                raise e
+            logger.warning(f"Database not ready yet, retrying in {retry_interval}s...")
+            time.sleep(retry_interval)
     
     db = SessionLocal()
     try:

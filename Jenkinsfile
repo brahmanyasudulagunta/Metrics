@@ -52,7 +52,7 @@ pipeline {
                 sh 'helm package ./charts'
                 
                 sh 'mv *.tgz /tmp/'
-                sh 'git add .
+                
             }
         }
 
@@ -61,7 +61,7 @@ pipeline {
                 script {
                   
                     withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GITHUB_TOKEN')]) {
-                        sh 'git add .'
+                        
                         sh 'git fetch origin gh-pages'
                         sh 'git checkout gh-pages || git checkout -b gh-pages'
                         

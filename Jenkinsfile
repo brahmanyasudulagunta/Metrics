@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // Docker configuration for 'brahmanya' account
+        
         DOCKER_HUB_USER = "brahmanya"
         BACKEND_IMAGE = "${DOCKER_HUB_USER}/backend-metrics"
         FRONTEND_IMAGE = "${DOCKER_HUB_USER}/frontend-metrics"
         
-        // Git configuration for Helm repository (gh-pages)
+        
         GIT_REPO_URL = "https://github.com/brahmanyasudulagunta/Metrics.git"
         GIT_CREDENTIALS_ID = "github" // Credentials ID for GitHub Personnal Access Token
     }
@@ -22,7 +22,7 @@ pipeline {
         stage('Build & Push Backend') {
             steps {
                 script {
-                    // Requires "Docker Pipeline" plugin and "docker-hub-creds" credentials
+                    
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
                         def backend = docker.build("${BACKEND_IMAGE}:v1", "./backend")
                         backend.push()
@@ -34,7 +34,8 @@ pipeline {
         stage('Build & Push Frontend') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                    
+                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
                         def frontend = docker.build("${FRONTEND_IMAGE}:v1", "./frontend")
                         frontend.push()
                     }
@@ -50,21 +51,20 @@ pipeline {
                 echo "Packaging chart..."
                 sh 'helm package ./charts'
                 
-                // Temporarily stash the package outside the workspace to avoid losing it during checkout
                 sh 'mv *.tgz /tmp/'
+                sh 'git add .
             }
         }
 
         stage('Deploy to gh-pages (Helm Repo)') {
             steps {
                 script {
-                    // Injecting the GitHub Token for authentication
+                  
                     withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GITHUB_TOKEN')]) {
-                        // Switch to gh-pages branch
+                        sh 'git add .'
                         sh 'git fetch origin gh-pages'
                         sh 'git checkout gh-pages || git checkout -b gh-pages'
                         
-                        // Bring the package back into the gh-pages branch
                         sh 'mv /tmp/*.tgz .'
                         
                         // Update Helm repo index

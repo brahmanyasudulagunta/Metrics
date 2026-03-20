@@ -24,7 +24,7 @@ pipeline {
                 script {
                     // Requires "Docker Pipeline" plugin and "docker-hub-creds" credentials
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                        def backend = docker.build("${BACKEND_IMAGE}:latest", "./backend")
+                        def backend = docker.build("${BACKEND_IMAGE}:v1", "./backend")
                         backend.push()
                     }
                 }
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                        def frontend = docker.build("${FRONTEND_IMAGE}:latest", "./frontend")
+                        def frontend = docker.build("${FRONTEND_IMAGE}:v1", "./frontend")
                         frontend.push()
                     }
                 }
@@ -76,7 +76,7 @@ pipeline {
                         
                         // Commit and push updates
                         sh 'git add .'
-                        sh 'git commit -m "chore: automated release to helm repository [skip ci]" || echo "No changes to commit"'
+                        sh 'git commit -m "Helm Release latest" || echo "No changes to commit"'
                         
                         // Push using the HTTPS token
                         def repoUrl = "https://${GITHUB_TOKEN}@github.com/brahmanyasudulagunta/Metrics.git"
@@ -88,10 +88,6 @@ pipeline {
     }
 
     post {
-        always {
-            echo "Cleaning up..."
-            sh 'rm -f /tmp/*.tgz'
-        }
         success {
             echo "Successfully built, pushed, and released Metrics Dashboard v1.0.0"
         }

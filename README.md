@@ -54,3 +54,27 @@ You can then open the dashboard at [http://localhost:3001](http://localhost:3001
 - **Overview:** Real-time CPU/Memory stats for the entire cluster.
 - **Kubernetes Explorer:** Deep dive into Pods, Deployments, and Events.
 - **Optimization:** Identify resource-heavy pods and scaling opportunities.
+
+---
+
+## 🤝 How This Complements Grafana (Not Competes)
+
+Great question that often comes up: *"How does this fit alongside Grafana?"*
+
+Think of them as two tools with different jobs on the same team:
+
+| | **This Dashboard** | **Grafana** |
+|---|---|---|
+| **Primary Focus** | Kubernetes-native operator experience | General-purpose metric visualization |
+| **Setup Effort** | Zero-config — deploys via a single Helm chart | Requires data sources, panel config, and dashboard JSON |
+| **Target User** | Developer / SRE who needs quick cluster context | Data analyst / SRE building custom observability |
+| **Scope** | Pod health, events, deployments, HTTP traffic | Any metric from any source (logs, traces, APM, etc.) |
+| **Interaction Model** | Unified UI with cluster actions (no CLI jumping) | Read-only dashboards with rich query (PromQL/LogQL) |
+
+### The Complementary Workflow
+
+1. **Day-to-day triage** → use this dashboard to check pod health, spot resource hogs, and review recent events — all without leaving a single UI or writing a PromQL query.
+2. **Deep investigation / capacity planning** → hand off to Grafana for custom dashboards, alert rules, long-term trend analysis, and multi-cluster aggregation.
+3. **Shared data layer** → both tools can point at the same Prometheus instance (see *Scenario B* above), so there is zero duplication of scraping or storage.
+
+In short: this dashboard lowers the barrier to *daily* Kubernetes observability, while Grafana remains the power tool for *custom* monitoring. They are better together than either is alone.

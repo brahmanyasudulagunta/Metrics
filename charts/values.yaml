@@ -85,4 +85,3 @@ postgresql:
       enabled: true
       size: 8Gi
 
-clusterName: "gitops"

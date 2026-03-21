@@ -46,6 +46,16 @@ kubectl port-forward svc/metrics-frontend 3001:3001 -n metrics
 ```
 You can then open the dashboard at [http://localhost:3001](http://localhost:3001).
 
+Use username `admin` to sign in to the dashboard.
+
+If you need to reveal current Helm credentials from Kubernetes Secret (`<release-name>-secret`), for this install it is `metrics-secret`:
+
+```bash
+kubectl get secret metrics-secret -n metrics -o jsonpath='{.data.ADMIN_PASSWORD}' | base64 -d && echo
+kubectl get secret metrics-secret -n metrics -o jsonpath='{.data.JWT_SECRET}' | base64 -d && echo
+kubectl get secret metrics-secret -n metrics -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 -d && echo
+```
+
 
 ---
 

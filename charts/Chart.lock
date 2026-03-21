@@ -3,7 +3,7 @@ dependencies:
   repository: https://prometheus-community.github.io/helm-charts
   version: 72.9.1
 - name: postgresql
-  repository: https://charts.bitnami.com/bitnami
-  version: 18.5.8
-digest: sha256:05c5f1a149efc77642150eada7b226ae89b50af2fee07fa54824f69d48a63311
-generated: "2026-03-18T20:15:23.410588094-05:00"
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 18.5.11
+digest: sha256:1a6e80be15119ebc0435374d4e7c604bf8471e7554718edca2866d5ceabfb345
+generated: "2026-03-21T10:05:58.031745893-05:00"

@@ -1,3 +1,25 @@
 apiVersion: v1
-entries: {}
-generated: "2026-03-20T11:37:30.419853723-05:00"
+entries:
+  metrics:
+  - apiVersion: v2
+    appVersion: 1.1.7
+    created: "2026-03-21T10:08:05.278170861-05:00"
+    dependencies:
+    - alias: monitoring
+      condition: monitoring.enabled
+      name: kube-prometheus-stack
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 72.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: '*'
+    description: A cloud-inspired monitoring dashboard with Prometheus alerts, user
+      activity auditing, and live cluster visibility
+    digest: b77f6dcc5c600b0509ab14c06ac43a931cb183e2e76f1dc514e5f4f20ea5f0d6
+    name: metrics
+    type: application
+    urls:
+    - https://brahmanyasudulagunta.github.io/Metrics/metrics-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-03-21T10:08:05.226418634-05:00"

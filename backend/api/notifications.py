@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.post("/acknowledge-action/{action_id}")
+@router.post("/notifications/acknowledge-action/{action_id}")
 def acknowledge_action(
     action_id: int,
     current_user: str = Depends(get_current_user),

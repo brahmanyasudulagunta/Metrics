@@ -11,14 +11,7 @@ api:
       memory: 256Mi
     limits:
       memory: 512Mi
-  dockerSocket:
-    enabled: false
-    path: /var/run/docker.sock
-  hostBinaryMounts:
-    enabled: false
-    kindPath: /usr/local/bin/kind
-    kubectlPath: /usr/bin/kubectl
-    dockerPath: /usr/bin/docker
+
 
 dashboard:
   image: brahmanya/frontend-metrics

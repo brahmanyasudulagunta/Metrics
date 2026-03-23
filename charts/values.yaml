@@ -4,7 +4,7 @@ api:
   replicas: 1
   adminPassword: admin
   jwtSecret: supersecretkey
-  devMode: false
+
   resources:
     requests:
       cpu: 100m

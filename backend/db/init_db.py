@@ -6,8 +6,6 @@ from api.security import hash_password
 
 logger = logging.getLogger(__name__)
 
-DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
-
 import time
 from sqlalchemy.exc import OperationalError
 
@@ -38,17 +36,11 @@ def init_db():
             admin = User(
                 username="admin",
                 hashed_password=hash_password(default_pw),
-                must_change_password=not DEV_MODE  # Skip change-password in dev
+                must_change_password=True
             )
             db.add(admin)
             db.commit()
             logger.info("Created default admin user.")
-        elif DEV_MODE:
-            # Dev mode — always reset password to env var value
-            admin.hashed_password = hash_password(default_pw)
-            admin.must_change_password = False
-            db.commit()
-            logger.info("DEV_MODE: Reset admin password to ADMIN_PASSWORD env var.")
         else:
             logger.info("Admin user already exists, skipping seed.")
     finally:

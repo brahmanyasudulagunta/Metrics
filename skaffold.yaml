@@ -1,0 +1,49 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: metrics-dashboard
+build:
+  # Tell Skaffold how to build the two Docker images
+  artifacts:
+    - image: brahmanya/backend-metrics
+      context: backend
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        infer:
+          - "**/*.py"
+    - image: brahmanya/frontend-metrics
+      context: frontend
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        infer:
+          - "src/**/*"
+          - "public/**/*"
+deploy:
+  # Tell Skaffold to deploy using your exact Helm chart
+  helm:
+    releases:
+      - name: metrics
+        chartPath: charts
+        namespace: metrics
+        createNamespace: true
+        valuesFiles:
+          - charts/values.yaml
+        setValues:
+          monitoring.enabled: "true"
+          api.pullPolicy: "IfNotPresent"
+          dashboard.pullPolicy: "IfNotPresent"
+        setValueTemplates:
+          # This maps your values.yaml image fields to the newly built local images
+          api.image: "{{.IMAGE_REPO_brahmanya_backend_metrics}}"
+          api.tag: "{{.IMAGE_TAG_brahmanya_backend_metrics}}@{{.IMAGE_DIGEST_brahmanya_backend_metrics}}"
+          dashboard.image: "{{.IMAGE_REPO_brahmanya_frontend_metrics}}"
+          dashboard.tag: "{{.IMAGE_TAG_brahmanya_frontend_metrics}}@{{.IMAGE_DIGEST_brahmanya_frontend_metrics}}"
+portForward:
+  # Automatically forward the frontend so you can see it at localhost:3001
+  - resourceType: service
+    resourceName: metrics-dashboard
+    namespace: metrics
+    port: 3001
+    localPort: 3001

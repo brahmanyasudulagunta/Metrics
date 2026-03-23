@@ -37,23 +37,13 @@ async def startup_event():
 
 # --- Flexible CORS ---
 cors_origins = os.getenv("CORS_ORIGINS", "").split(",")
-# In dev mode, we allow all to make local testing on different ports seamless
-if os.getenv("DEV_MODE", "false").lower() == "true":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[o for o in cors_origins if o],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o for o in cors_origins if o] or ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(overview_router, prefix="/api")

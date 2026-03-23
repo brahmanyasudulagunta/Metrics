@@ -24,7 +24,7 @@ spec:
       containers:
         - name: backend
           image: "{{ .Values.api.image }}:{{ .Values.api.tag }}"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.api.pullPolicy | default "Always" }}
           ports:
             - containerPort: 8000
           {{- with .Values.api.resources }}

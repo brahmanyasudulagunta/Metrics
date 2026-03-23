@@ -22,7 +22,7 @@ spec:
       containers:
         - name: frontend
           image: "{{ .Values.dashboard.image }}:{{ .Values.dashboard.tag }}"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.dashboard.pullPolicy | default "Always" }}
           ports:
             - containerPort: 3001
           {{- with .Values.dashboard.resources }}

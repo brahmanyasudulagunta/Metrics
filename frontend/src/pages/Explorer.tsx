@@ -28,6 +28,7 @@ const Explorer: React.FC = () => {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [metricNames, setMetricNames] = useState<string[]>([]);
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [lines, setLines] = useState<string[]>([]);
     const [seriesStats, setSeriesStats] = useState<SeriesStat[]>([]);
@@ -46,6 +47,23 @@ const Explorer: React.FC = () => {
         if (Math.abs(val) < 0.01) return val.toExponential(2);
         return val.toFixed(2);
     };
+
+    React.useEffect(() => {
+        const fetchNames = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`${API_URL}/api/metrics/names`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.status === "success" && Array.isArray(res.data.data)) {
+                    setMetricNames(res.data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch metric names", err);
+            }
+        };
+        fetchNames();
+    }, []);
 
     const handleRunQuery = async () => {
         if (!query.trim()) return;
@@ -168,14 +186,20 @@ const Explorer: React.FC = () => {
                         fullWidth
                         size="small"
                         variant="outlined"
-                        placeholder="Enter expression (press Enter to run)"
+                        placeholder="Enter expression (e.g. rate(node_cpu_seconds_total[1m]))"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleRunQuery()}
-                        InputProps={{
+                        inputProps={{
+                            list: 'metric-suggestions',
                             style: { fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: '0.875rem' }
                         }}
                     />
+                    <datalist id="metric-suggestions">
+                        {metricNames.map(name => (
+                            <option key={name} value={name} />
+                        ))}
+                    </datalist>
                     <Button
                         variant="contained"
                         sx={{

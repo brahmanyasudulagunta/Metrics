@@ -9,9 +9,19 @@ class PromClient:
         self.base = base.rstrip("/")
 
     def _req(self, path, params):
-        r = requests.get(f"{self.base}{path}", params=params, timeout=15)
-        r.raise_for_status()
-        return r.json()
+        try:
+            r = requests.get(f"{self.base}{path}", params=params, timeout=15)
+            if r.status_code >= 400:
+                # Return the Prometheus error message instead of raising 500
+                data = r.json()
+                return {"status": "error", "error": data.get("error", "Unknown Prometheus error"), "status_code": r.status_code}
+            return r.json()
+        except Exception as e:
+            return {"status": "error", "error": str(e), "status_code": 500}
+
+    def get_metric_names(self):
+        """Fetch all available metric names from Prometheus for autocomplete"""
+        return self._req("/api/v1/label/__name__/values", {})
 
     def query(self, query):
         return self._req("/api/v1/query", {"query": query})

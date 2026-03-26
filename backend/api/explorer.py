@@ -5,6 +5,11 @@ from api.auth import get_current_user
 router = APIRouter()
 client = PromClient()
 
+@router.get("/metrics/names")
+def get_metric_names(current_user: str = Depends(get_current_user)):
+    """Return a list of all available metric names for autocomplete"""
+    return client.get_metric_names()
+
 @router.get("/metrics/query_range_raw")
 def query_range_raw(
     query: str,
@@ -17,8 +22,10 @@ def query_range_raw(
     if not query:
         raise HTTPException(status_code=400, detail="Query parameter is required")
     
-    try:
-        return client.query_range_result_like_prom(query, start=start, end=end, step=step)
-    except Exception as e:
-        logger.error(f"Explorer query error: {e}")
-        return {"status": "success", "data": {"resultType": "matrix", "result": []}}
+    res = client.query_range_result_like_prom(query, start=start, end=end, step=step)
+    
+    # If the backend returned an error status from Prometheus, raise it so the frontend catches it
+    if isinstance(res, dict) and res.get("status") == "error":
+        raise HTTPException(status_code=res.get("status_code", 400), detail=res.get("error"))
+        
+    return res

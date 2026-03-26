@@ -21,7 +21,7 @@ Default Credentials:
   Password: {{ .Values.api.adminPassword }}
 
 Features:
-- 🚀 Cloud-Inspired Alerting: Monitor your cluster via the new Notification Hub.
-- 📋 Activity Audit Logs: Track cluster changes (Scale, Delete, Restart) in real-time.
+- Cloud-Inspired Alerting: Monitor your cluster via the new Notification Hub.
+- Activity Audit Logs: Track cluster changes (Scale, Delete, Restart) in real-time.
 
 Happy Monitoring!

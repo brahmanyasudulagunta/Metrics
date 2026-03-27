@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Paper, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Tab } from '@mui/material';
+import { Box, Typography, TextField, Button, Paper, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Tab, Autocomplete } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import API_URL from '../config';
@@ -178,28 +178,47 @@ const Explorer: React.FC = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <Typography variant="h5" sx={{ mb: 3 }}>PromQL Explorer</Typography>
 
+
             {/* Query Bar */}
             <Paper sx={{ p: 2, mb: 2 }}>
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
                     <Typography sx={{ color: tokens.text.muted, px: 1, fontFamily: 'monospace' }}>{`>_`}</Typography>
-                    <TextField
+
+                    <Autocomplete
                         fullWidth
-                        size="small"
-                        variant="outlined"
-                        placeholder="Enter expression (e.g. rate(node_cpu_seconds_total[1m]))"
+                        freeSolo
+                        options={metricNames}
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleRunQuery()}
-                        inputProps={{
-                            list: 'metric-suggestions',
-                            style: { fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: '0.875rem' }
+                        onInputChange={(event, newValue) => setQuery(newValue)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                // Prevent Autocomplete from swallowing the Enter key
+                                handleRunQuery();
+                            }
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                size="small"
+                                placeholder="Enter expression (e.g. rate(node_cpu_seconds_total[1m]))"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    sx: {
+                                        fontFamily: '"SF Mono", "Fira Code", monospace',
+                                        fontSize: '0.875rem'
+                                    }
+                                }}
+                            />
+                        )}
+                        sx={{
+                            '& .MuiAutocomplete-paper': {
+                                bgcolor: 'rgba(13,17,23,0.95)',
+                                color: tokens.text.primary,
+                                border: `1px solid ${tokens.border.default}`,
+                            }
                         }}
                     />
-                    <datalist id="metric-suggestions">
-                        {metricNames.map(name => (
-                            <option key={name} value={name} />
-                        ))}
-                    </datalist>
+
                     <Button
                         variant="contained"
                         sx={{

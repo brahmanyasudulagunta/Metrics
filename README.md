@@ -4,7 +4,7 @@ A Kubernetes-native monitoring dashboard that provides real-time visibility into
 
 ---
 
-## 🚀 Installation
+## Installation
 
 Follow these steps to deploy the Metrics Dashboard to your Kubernetes cluster using Helm.
 

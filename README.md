@@ -1,4 +1,4 @@
-# Metrics Dashboard
+# Kubernetes Observability Platform
 
 A Kubernetes-native monitoring dashboard that provides real-time visibility into your cluster health, pod performance, and HTTP traffic metrics.
 

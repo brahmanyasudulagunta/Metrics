@@ -42,7 +42,7 @@ helm upgrade --install metrics metrics/metrics \
 Once the pods are running, use port-forwarding to access the UI:
 
 ```bash
-kubectl port-forward svc/metrics-frontend 3001:3001 -n metrics
+kubectl port-forward svc/metrics-dashboard 3001:3001 -n metrics
 ```
 You can then open the dashboard at [http://localhost:3001](http://localhost:3001).
 

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from api.k8s import router as k8s_router
 from api.overview import router as overview_router
 from api.explorer import router as explorer_router
@@ -21,19 +22,21 @@ import os
 
 load_dotenv()
 
-app = FastAPI(title="DevOps Monitoring Backend")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    init_db()
+    asyncio.create_task(check_alerts_loop())
+    yield
+    # Shutdown (cleanup if needed)
+
+app = FastAPI(title="DevOps Monitoring Backend", lifespan=lifespan)
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 app.add_middleware(SlowAPIMiddleware)
-
-init_db()
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(check_alerts_loop())
 
 # --- Flexible CORS ---
 cors_origins = os.getenv("CORS_ORIGINS", "").split(",")

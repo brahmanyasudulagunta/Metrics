@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, JSON, DateTime
-from datetime import datetime
+from datetime import datetime, timezone
 from db.database import Base
 
 class User(Base):
@@ -20,14 +20,14 @@ class AlertRule(Base):
     condition = Column(String, default="above") # 'above', 'below'
     duration = Column(String, default="1m") # e.g. '5m'
     severity = Column(String, default="warning") # 'info', 'warning', 'critical'
-    notification_channels = Column(JSON, default=[]) # e.g. ["email", "slack", "webhook"]
+    notification_channels = Column(JSON, default=list) # e.g. ["email", "slack", "webhook"]
     is_enabled = Column(Boolean, default=True)
     is_firing = Column(Boolean, default=False)
     last_value = Column(Float, nullable=True)
     last_fired_at = Column(DateTime, nullable=True)
     last_checked_at = Column(DateTime, nullable=True)
-    firing_details = Column(JSON, default={}, nullable=False) # Store labels/summary of firing instances
-    created_at = Column(DateTime, default=datetime.utcnow)
+    firing_details = Column(JSON, default=dict, nullable=False) # Store labels/summary of firing instances
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class FiredAlert(Base):
     __tablename__ = "fired_alerts"
@@ -40,7 +40,7 @@ class FiredAlert(Base):
     condition = Column(String)
     labels = Column(JSON)
     is_acknowledged = Column(Boolean, default=False)
-    fired_at = Column(DateTime, default=datetime.utcnow)
+    fired_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     resolved_at = Column(DateTime, nullable=True)
 
 class ActionLog(Base):
@@ -53,4 +53,4 @@ class ActionLog(Base):
     namespace = Column(String, nullable=True)
     details = Column(String, nullable=True)
     is_acknowledged = Column(Boolean, default=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))

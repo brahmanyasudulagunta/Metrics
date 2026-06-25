@@ -1,19 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from db.database import SessionLocal
+from db.database import get_db
 from db.models import AlertRule, FiredAlert
 from pydantic import BaseModel
 from datetime import datetime
+from api.auth import get_current_user
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# get_db is imported from db.database
 
 class AlertRuleBase(BaseModel):
     name: str
@@ -66,7 +62,7 @@ class FiredAlertSchema(BaseModel):
         from_attributes = True
 
 @router.post("/alerts/acknowledge/{fired_alert_id}")
-def acknowledge_alert(fired_alert_id: int, db: Session = Depends(get_db)):
+def acknowledge_alert(fired_alert_id: int, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     db_fired = db.query(FiredAlert).filter(FiredAlert.id == fired_alert_id).first()
     if not db_fired:
         raise HTTPException(status_code=404, detail="Fired alert not found")
@@ -76,15 +72,15 @@ def acknowledge_alert(fired_alert_id: int, db: Session = Depends(get_db)):
     return {"detail": "Alert acknowledged"}
 
 @router.get("/alerts", response_model=List[AlertRuleSchema])
-def list_alerts(db: Session = Depends(get_db)):
+def list_alerts(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.query(AlertRule).all()
 
 @router.get("/alerts/history", response_model=List[FiredAlertSchema])
-def list_alert_history(db: Session = Depends(get_db), limit: int = 50):
+def list_alert_history(current_user: str = Depends(get_current_user), db: Session = Depends(get_db), limit: int = 50):
     return db.query(FiredAlert).order_by(FiredAlert.fired_at.desc()).limit(limit).all()
 
 @router.post("/alerts", response_model=AlertRuleSchema)
-def create_alert(alert: AlertRuleCreate, db: Session = Depends(get_db)):
+def create_alert(alert: AlertRuleCreate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     db_alert = AlertRule(**alert.model_dump())
     db.add(db_alert)
     db.commit()
@@ -92,7 +88,7 @@ def create_alert(alert: AlertRuleCreate, db: Session = Depends(get_db)):
     return db_alert
 
 @router.put("/alerts/{alert_id}", response_model=AlertRuleSchema)
-def update_alert(alert_id: int, alert: AlertRuleUpdate, db: Session = Depends(get_db)):
+def update_alert(alert_id: int, alert: AlertRuleUpdate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     db_alert = db.query(AlertRule).filter(AlertRule.id == alert_id).first()
     if not db_alert:
         raise HTTPException(status_code=404, detail="Alert rule not found")
@@ -106,7 +102,7 @@ def update_alert(alert_id: int, alert: AlertRuleUpdate, db: Session = Depends(ge
     return db_alert
 
 @router.delete("/alerts/{alert_id}")
-def delete_alert(alert_id: int, db: Session = Depends(get_db)):
+def delete_alert(alert_id: int, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     db_alert = db.query(AlertRule).filter(AlertRule.id == alert_id).first()
     if not db_alert:
         raise HTTPException(status_code=404, detail="Alert rule not found")

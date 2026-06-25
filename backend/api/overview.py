@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
 from services.prometheus_client import PromClient
 from api.auth import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 client = PromClient()
@@ -15,7 +18,8 @@ def cpu_usage(
     try:
         q = '100 - (avg by(instance)(irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)'
         return client.query_range_for_chart(q, start=start, end=end, step=step)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching CPU metrics: {e}")
         return []
 
 @router.get("/metrics/memory")
@@ -28,7 +32,8 @@ def memory_usage(
     try:
         q = '(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100'
         return client.query_range_for_chart(q, start=start, end=end, step=step)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching memory metrics: {e}")
         return []
 
 @router.get("/metrics/disk")
@@ -46,7 +51,8 @@ def disk_usage(
         )
         """
         return client.query_range_for_chart(q, start=start, end=end, step=step)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching disk metrics: {e}")
         return []
 
 @router.get("/metrics/network_rx")
@@ -59,7 +65,8 @@ def network_rx(
     try:
         q = 'irate(node_network_receive_bytes_total{device!="lo"}[1m])'
         return client.query_range_for_chart(q, start=start, end=end, step=step)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching network RX metrics: {e}")
         return []
 
 @router.get("/metrics/network_tx")
@@ -72,7 +79,8 @@ def network_tx(
     try:
         q = 'irate(node_network_transmit_bytes_total{device!="lo"}[1m])'
         return client.query_range_for_chart(q, start=start, end=end, step=step)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching network TX metrics: {e}")
         return []
 
 @router.get("/metrics/uptime")
@@ -85,7 +93,8 @@ def system_uptime(current_user: str = Depends(get_current_user)):
         hours = int((uptime_seconds % 86400) // 3600)
         minutes = int((uptime_seconds % 3600) // 60)
         return {"uptime": f"{days}d {hours}h {minutes}m", "seconds": uptime_seconds}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching uptime: {e}")
         return {"uptime": "N/A", "seconds": 0}
 
 @router.get("/metrics/load")
@@ -99,7 +108,8 @@ def load_average(current_user: str = Depends(get_current_user)):
             "load5": round(float(load5), 2),
             "load15": round(float(load15), 2)
         }
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching load average: {e}")
         return {"load1": 0, "load5": 0, "load15": 0}
 
 @router.get("/metrics/processes")
@@ -110,7 +120,8 @@ def process_count(current_user: str = Depends(get_current_user)):
         res_blocked = client.query('node_procs_blocked')
         blocked = int(float(res_blocked["data"]["result"][0]["value"][1]))
         return {"running": running, "blocked": blocked, "total": running + blocked}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching process count: {e}")
         return {"running": 0, "blocked": 0, "total": 0}
 
 @router.get("/metrics/temperature")
@@ -130,7 +141,8 @@ def system_temperature(current_user: str = Depends(get_current_user)):
                 if res.get("data", {}).get("result"):
                     temp = float(res["data"]["result"][0]["value"][1])
                     return {"value": round(temp, 1), "status": "Active", "available": True}
-            except:
+            except Exception as e:
+                logger.debug(f"Temperature query '{q}' returned no data: {e}")
                 continue
                 
         return {"value": 0, "status": "No Sensors", "available": False}

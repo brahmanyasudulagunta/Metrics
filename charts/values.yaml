@@ -2,8 +2,8 @@ api:
   image: brahmanya/backend-metrics
   tag: "v1"
   replicas: 1
-  adminPassword: admin
-  jwtSecret: supersecretkey
+  adminPassword: ""    # auto-generated if empty
+  jwtSecret: ""        # auto-generated if empty
 
   resources:
     requests:
@@ -69,7 +69,7 @@ postgresql:
     tag: "latest"
   auth:
     username: metrics_user
-    password: metrics_password
+    password: ""           # auto-generated if empty
     database: metrics_db
   primary:
     image:

@@ -34,6 +34,10 @@ helm upgrade --install metrics ./charts \
 
 ## 4. Verification
 ```bash
+# Verify pods are running in the namespace
+kubectl get pods -n metrics
+```
+
 ## 5. Troubleshooting: "Connection Refused"
 If the browser console shows `ERR_CONNECTION_REFUSED` to `localhost:8000`:
 1.  **Rebuild**: Ensure you have pushed the latest version of the frontend image. The `API_URL` is baked into the JS at build time.

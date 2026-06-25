@@ -83,30 +83,17 @@ class K8sClient:
 
     def get_clusters(self):
         try:
-            import subprocess
-            # Get list of kind clusters as a reliable source
-            kind_clusters = []
-            try:
-                kind_output = subprocess.check_output(["kind", "get", "clusters"], text=True).strip()
-                if kind_output:
-                    kind_clusters = kind_output.split('\n')
-            except:
-                pass
-
-            # Get list of contexts from kubeconfig
+            # Get list of contexts from kubeconfig (Python client only, no subprocess)
             contexts = []
             active_context_name = ""
             try:
                 contexts_list, active_context = config.list_kube_config_contexts()
                 contexts = [c['name'] for c in contexts_list]
                 active_context_name = active_context['name'] if active_context else ""
-            except:
-                # Fallback to kubectl if python client fails
-                try:
-                    active_context_name = subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
-                    contexts = [active_context_name]
-                except:
-                    pass
+            except config.ConfigException:
+                # In-cluster: no kubeconfig available, return cluster info from env
+                cluster_name = os.getenv("CLUSTER_NAME", "in-cluster")
+                return [{"id": "in-cluster", "name": cluster_name, "status": "Active", "provider": "Kubernetes"}]
 
             # Deduplicate: If we have 'kind-foo' context and 'foo' kind cluster, treat them as the same
             seen_clusters = set()
@@ -117,7 +104,7 @@ class K8sClient:
             # Use host active context as source of truth if we haven't overridden it in session
             current_effective = self.current_context or active_context_name
 
-            # 1. Process all contexts from kubeconfig first
+            # Process all contexts from kubeconfig
             for name in contexts:
                 # Normalize base name for deduplication
                 base_name = name.replace("kind-", "")
@@ -126,29 +113,14 @@ class K8sClient:
                 seen_clusters.add(base_name)
                 
                 is_active = (name == active_context_name)
-                is_kind = name.startswith('kind-') or base_name in kind_clusters
+                # Infer Kind provider from context name prefix
+                is_kind = name.startswith('kind-')
                 
                 result.append({
                     "id": name,
                     "name": name,
                     "status": "Active" if is_active else "Available",
                     "provider": "Kind" if is_kind else "Kubernetes"
-                })
-
-            # 2. Add Kind clusters that don't have a context matching their base name
-            for name in kind_clusters:
-                base_name = name.replace("kind-", "")
-                if base_name in seen_clusters:
-                    continue
-                seen_clusters.add(base_name)
-                
-                # If we add it from Kind list and there's no context yet, use the canonical kind- name
-                full_name = f"kind-{name}"
-                result.append({
-                    "id": full_name,
-                    "name": full_name,
-                    "status": "Available",
-                    "provider": "Kind"
                 })
             
             if not result:
@@ -162,17 +134,9 @@ class K8sClient:
             return result
         except Exception as e:
             logger.error(f"Error listing clusters: {e}")
-            return [{"id": "kind-gitops", "name": "kind-gitops", "status": "Active", "provider": "Kind"}]
+            cluster_name = os.getenv("CLUSTER_NAME", "in-cluster")
+            return [{"id": "in-cluster", "name": cluster_name, "status": "Active", "provider": "Kubernetes"}]
 
-
-    def create_namespace(self, name):
-        if not self.is_connected(): return {"error": "Native K8s client not configured."}
-        try:
-            ns = client.V1Namespace(metadata=client.V1ObjectMeta(name=name))
-            self.core_api.create_namespace(body=ns)
-            return {"success": True, "message": f"Namespace '{name}' created."}
-        except Exception as e:
-            return {"error": str(e)}
 
     def get_nodes(self):
         if not self.is_connected(): return {"error": "Native K8s client not configured."}

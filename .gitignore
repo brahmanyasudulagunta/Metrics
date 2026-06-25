@@ -6,6 +6,7 @@ frontend/build/
 # Python
 __pycache__/
 *.pyc
+*.db
 backend/.env
 frontend/.env
 

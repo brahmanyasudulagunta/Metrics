@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from db.models import AlertRule, FiredAlert
@@ -73,7 +73,7 @@ async def evaluate_alert(alert: AlertRule, db: Session):
                     break 
 
         # Update AlertRule state in the database
-        alert.last_checked_at = datetime.utcnow()
+        alert.last_checked_at = datetime.now(timezone.utc)
         alert.is_firing = is_firing
         # Even if not firing, store the most recent value from data if available
         if is_firing:
@@ -93,7 +93,7 @@ async def evaluate_alert(alert: AlertRule, db: Session):
 
             if not active_alert:
                 logger.warning(f"[Alert: {alert.name}] Creating NEW FiredAlert record.")
-                alert.last_fired_at = datetime.utcnow()
+                alert.last_fired_at = datetime.now(timezone.utc)
                 new_fired = FiredAlert(
                     alert_rule_id=alert.id,
                     alert_name=alert.name,
@@ -102,7 +102,7 @@ async def evaluate_alert(alert: AlertRule, db: Session):
                     condition=alert.condition,
                     labels=firing_labels,
                     is_acknowledged=False,
-                    fired_at=datetime.utcnow()
+                    fired_at=datetime.now(timezone.utc)
                 )
                 db.add(new_fired)
             else:
@@ -121,7 +121,7 @@ async def evaluate_alert(alert: AlertRule, db: Session):
             if open_alerts:
                 logger.info(f"[Alert: {alert.name}] Resolving {len(open_alerts)} active records.")
                 for open_alert in open_alerts:
-                    open_alert.resolved_at = datetime.utcnow()
+                    open_alert.resolved_at = datetime.now(timezone.utc)
                     db.add(open_alert)
             
             alert.firing_details = {} 

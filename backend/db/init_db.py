@@ -11,7 +11,7 @@ from sqlalchemy.exc import OperationalError
 
 def init_db():
     """Create tables and seed default admin user with retries for DB readiness."""
-    max_retries = 10
+    max_retries = 30
     retry_interval = 5
     
     for attempt in range(max_retries):

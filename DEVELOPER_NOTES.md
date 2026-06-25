@@ -1,52 +1,88 @@
-# 🚀 Installation Steps
+# 🛠️ Developer Guide: Helm Release & Git Push Workflow
 
-## 1. Local Development (Docker Compose)
-Use this for rapid development without Kubernetes.
+This document outlines the workflow for updating the Helm chart configurations, committing code changes, and releasing new packaged chart versions to your GitHub Pages Helm repository.
+
+---
+
+## Step 1: Update Helm Chart Configuration
+
+After making your code changes and preparing your new application docker images (e.g., version `v1.1.8`), update the Helm values:
+
+1. Open [charts/values.yaml](file:///home/brahmanya/Metrics/charts/values.yaml) and update the backend and frontend tags with your new image version:
+   ```yaml
+   api:
+     image: brahmanya/backend-metrics
+     tag: "v1.1.8"  # <-- Update backend tag
+
+   dashboard:
+     image: brahmanya/frontend-metrics
+     tag: "v1.1.8"  # <-- Update frontend tag
+   ```
+
+2. Open [charts/Chart.yaml](file:///home/brahmanya/Metrics/charts/Chart.yaml) and increment the chart `version` (e.g., to `1.1.4`):
+   ```yaml
+   version: "1.1.4"      # <-- Increment chart release version
+   appVersion: "1.1.8"   # <-- Match your application version tag
+   ```
+
+---
+
+## Step 2: Commit & Push Code and Chart Changes to Git
+
+Push all your source code updates, configuration edits, and chart value modifications to your development branch (e.g., `main`):
+
 ```bash
-# Start the Backend and Frontend
-docker compose -f infra/docker-compose.yml up -d --build
+# 1. Add all modified files
+git add .
+
+# 2. Commit changes
+git commit -m "Update backend services, frontend dashboard, and charts to v1.1.8"
+
+# 3. Push to your main repository branch
+git push origin main
 ```
 
-## 2. Kubernetes Setup (Kind)
-Use this to test the full cluster management features.
-```bash
-# 1. Create the local cluster
-kind create cluster --name gitops
+---
 
-# 2. Ensure context is set
-kubectl config use-context kind-gitops
-```
+## Step 3: Package & Release Helm Chart (to GitHub Pages)
 
-## 3. Helm Deployment
-Use this to deploy the application into the cluster.
+Publish the updated Helm chart package to your public Helm repository hosted on the `gh-pages` branch:
+
+### Part A: Package the Helm Chart
 ```bash
-# 1. Update chart dependencies
+# 1. Download and update chart dependencies (subcharts)
 helm dependency update ./charts
 
-# 2. Install/Upgrade the metrics stack
-helm upgrade --install metrics ./charts \
-  --namespace metrics \
-  --create-namespace \
-  --set monitoring.enabled=true \
-  --set prometheus.url="http://prometheus-server:9090" \
-  --set clusterName="gitops"
+# 2. Package the charts directory into a tarball
+helm package ./charts
+```
+*This command creates a release package (e.g., `metrics-1.1.4.tgz`) in your root directory.*
+
+### Part B: Update and Index the `gh-pages` Branch
+```bash
+# 3. Move the package out of git tracking temporarily
+mv metrics-*.tgz /tmp/
+
+# 4. Fetch changes and checkout your gh-pages branch
+git fetch origin
+git checkout gh-pages
+
+# 5. Bring the package back into the workspace
+mv /tmp/metrics-*.tgz .
+
+# 6. Re-generate the index.yaml file, merging it with your existing repository history
+helm repo index . --url https://brahmanyasudulagunta.github.io/Metrics/ --merge index.yaml
 ```
 
-## 4. Verification
+### Part C: Push Release to GitHub Pages
 ```bash
-# Verify pods are running in the namespace
-kubectl get pods -n metrics
-```
+# 7. Add the new package and updated index
+git add metrics-*.tgz index.yaml
+git commit -m "Release metrics-1.1.4 Helm chart"
 
-## 5. Troubleshooting: "Connection Refused"
-If the browser console shows `ERR_CONNECTION_REFUSED` to `localhost:8000`:
-1.  **Rebuild**: Ensure you have pushed the latest version of the frontend image. The `API_URL` is baked into the JS at build time.
-2.  **Relative Path**: Ensure `src/config.ts` has `const API_URL = '';` (this forces the browser to hit Nginx instead of the backend directly).
-3.  **Port Forward**: Ensure you are accessing the dashboard on the correct port (usually `3001` or `3002`).
+# 8. Push to GitHub Pages Helm repo
+git push origin gh-pages
 
-```bash
-# Force rebuild and re-deploy
-docker build -t ashrith2727/frontend-metrics:v1 ./frontend
-docker push ashrith2727/frontend-metrics:v1
-kubectl rollout restart deployment metrics-dashboard -n metrics
+# 9. Return to your working branch to resume development
+git checkout main
 ```

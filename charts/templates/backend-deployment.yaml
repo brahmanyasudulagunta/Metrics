@@ -31,6 +31,12 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql
+                  key: password
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-config

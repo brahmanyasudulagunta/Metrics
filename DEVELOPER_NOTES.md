@@ -1,88 +1,112 @@
-# 🛠️ Developer Guide: Helm Release & Git Push Workflow
+# 🚀 Developer Workflow: From Code Change to Deployment
 
-This document outlines the workflow for updating the Helm chart configurations, committing code changes, and releasing new packaged chart versions to your GitHub Pages Helm repository.
-
----
-
-## Step 1: Update Helm Chart Configuration
-
-After making your code changes and preparing your new application docker images (e.g., version `v1.1.8`), update the Helm values:
-
-1. Open [charts/values.yaml](file:///home/brahmanya/Metrics/charts/values.yaml) and update the backend and frontend tags with your new image version:
-   ```yaml
-   api:
-     image: brahmanya/backend-metrics
-     tag: "v1.1.8"  # <-- Update backend tag
-
-   dashboard:
-     image: brahmanya/frontend-metrics
-     tag: "v1.1.8"  # <-- Update frontend tag
-   ```
-
-2. Open [charts/Chart.yaml](file:///home/brahmanya/Metrics/charts/Chart.yaml) and increment the chart `version` (e.g., to `1.1.4`):
-   ```yaml
-   version: "1.1.4"      # <-- Increment chart release version
-   appVersion: "1.1.8"   # <-- Match your application version tag
-   ```
+Whenever you make changes to the backend or frontend source code, follow these exact steps in order to build, deploy, and release your updates.
 
 ---
 
-## Step 2: Commit & Push Code and Chart Changes to Git
+## Step 1: Build & Push New Docker Images
+After editing your code, you must package those changes into new Docker images and push them to your registry (e.g., Docker Hub) so Kubernetes can pull them.
 
-Push all your source code updates, configuration edits, and chart value modifications to your development branch (e.g., `main`):
+```bash
+# 1. Define your new version tag (e.g., v1.1.9)
+VERSION="v1.1.9"
+
+# 2. Build and push the Backend image
+docker build -t brahmanya/backend-metrics:${VERSION} ./backend
+docker push brahmanya/backend-metrics:${VERSION}
+
+# 3. Build and push the Frontend image
+docker build -t brahmanya/frontend-metrics:${VERSION} ./frontend
+docker push brahmanya/frontend-metrics:${VERSION}
+```
+
+---
+
+## Step 2: Update the Helm Chart
+Now tell your Kubernetes configuration to use the newly built images.
+
+1. Open `charts/values.yaml` and update the image tags:
+```yaml
+api:
+  image: brahmanya/backend-metrics
+  tag: "v1.1.9"  # <-- Update to your new backend tag
+
+dashboard:
+  image: brahmanya/frontend-metrics
+  tag: "v1.1.9"  # <-- Update to your new frontend tag
+```
+
+2. Open `charts/Chart.yaml` and increment the versions:
+```yaml
+version: "1.1.5"      # <-- Increment the Helm chart release version (e.g. 1.1.4 -> 1.1.5)
+appVersion: "1.1.9"   # <-- Match your new application docker image tag
+```
+
+---
+
+## Step 3: Test the Deployment Locally (Optional)
+Before pushing to GitHub, it is highly recommended to verify your changes work in your local cluster:
+
+```bash
+# Update local dependencies and deploy the new images
+helm dependency update ./charts
+helm upgrade --install metrics ./charts -n metrics
+```
+*Verify everything is running successfully: `kubectl get pods -n metrics`*
+
+---
+
+## Step 4: Commit & Push Code to Main Branch
+Save your source code and Helm configuration changes to your main Git branch.
 
 ```bash
 # 1. Add all modified files
 git add .
 
-# 2. Commit changes
-git commit -m "Update backend services, frontend dashboard, and charts to v1.1.8"
+# 2. Commit your changes
+git commit -m "Update application code and bump chart to v1.1.5"
 
-# 3. Push to your main repository branch
+# 3. Push to your main branch
 git push origin main
 ```
 
 ---
 
-## Step 3: Package & Release Helm Chart (to GitHub Pages)
+## Step 5: Package & Release to the Helm Repository (`gh-pages`)
+Finally, publish the updated Helm chart to your GitHub Pages repository so your users can install it via standard `helm install` commands.
 
-Publish the updated Helm chart package to your public Helm repository hosted on the `gh-pages` branch:
-
-### Part A: Package the Helm Chart
+### Part A: Package the Chart
 ```bash
-# 1. Download and update chart dependencies (subcharts)
-helm dependency update ./charts
-
-# 2. Package the charts directory into a tarball
+# 1. Package the charts directory into a tarball
 helm package ./charts
 ```
-*This command creates a release package (e.g., `metrics-1.1.4.tgz`) in your root directory.*
+*This generates a file like `metrics-1.1.5.tgz` in your current directory.*
 
-### Part B: Update and Index the `gh-pages` Branch
+### Part B: Update the `gh-pages` Branch
 ```bash
-# 3. Move the package out of git tracking temporarily
+# 2. Move the package out of git tracking temporarily
 mv metrics-*.tgz /tmp/
 
-# 4. Fetch changes and checkout your gh-pages branch
+# 3. Checkout your gh-pages branch
 git fetch origin
 git checkout gh-pages
 
-# 5. Bring the package back into the workspace
+# 4. Bring the package back into the workspace
 mv /tmp/metrics-*.tgz .
 
-# 6. Re-generate the index.yaml file, merging it with your existing repository history
+# 5. Re-generate the Helm index to register the new version
 helm repo index . --url https://brahmanyasudulagunta.github.io/Metrics/ --merge index.yaml
 ```
 
-### Part C: Push Release to GitHub Pages
+### Part C: Publish to GitHub Pages
 ```bash
-# 7. Add the new package and updated index
+# 6. Commit the new release files
 git add metrics-*.tgz index.yaml
-git commit -m "Release metrics-1.1.4 Helm chart"
+git commit -m "Release metrics-1.1.5 Helm chart"
 
-# 8. Push to GitHub Pages Helm repo
+# 7. Push the repository index to GitHub Pages
 git push origin gh-pages
 
-# 9. Return to your working branch to resume development
+# 8. Return to your working branch to resume development
 git checkout main
 ```

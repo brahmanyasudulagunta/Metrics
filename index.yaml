@@ -3,7 +3,28 @@ entries:
   metrics:
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.584294433-05:00"
+    created: "2026-06-27T14:13:03.254430851-05:00"
+    dependencies:
+    - alias: monitoring
+      condition: monitoring.enabled
+      name: kube-prometheus-stack
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 72.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: '*'
+    description: A cloud-inspired monitoring dashboard with Prometheus alerts, user
+      activity auditing, and live cluster visibility
+    digest: 8c3f61b835095da6089cf4b6f0e21188cc302a2a70175599667445cb518c79a9
+    name: metrics
+    type: application
+    urls:
+    - https://brahmanyasudulagunta.github.io/Metrics/metrics-1.1.6.tgz
+    version: 1.1.6
+  - apiVersion: v2
+    appVersion: 1.1.7
+    created: "2026-06-27T14:13:03.206808012-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -24,7 +45,7 @@ entries:
     version: 1.1.5
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.538662241-05:00"
+    created: "2026-06-27T14:13:03.161616807-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -45,7 +66,7 @@ entries:
     version: 1.1.4
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.487768674-05:00"
+    created: "2026-06-27T14:13:03.118339415-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -66,7 +87,7 @@ entries:
     version: 1.1.3
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.441793887-05:00"
+    created: "2026-06-27T14:13:03.06872475-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -87,7 +108,7 @@ entries:
     version: 1.1.2
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.398836632-05:00"
+    created: "2026-06-27T14:13:03.021265187-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -108,7 +129,7 @@ entries:
     version: 1.0.2
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.35373336-05:00"
+    created: "2026-06-27T14:13:02.976647734-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -129,7 +150,7 @@ entries:
     version: 1.0.1
   - apiVersion: v2
     appVersion: 1.1.7
-    created: "2026-06-25T14:56:16.302948849-05:00"
+    created: "2026-06-27T14:13:02.926885631-05:00"
     dependencies:
     - alias: monitoring
       condition: monitoring.enabled
@@ -148,4 +169,4 @@ entries:
     urls:
     - https://brahmanyasudulagunta.github.io/Metrics/metrics-1.0.0.tgz
     version: 1.0.0
-generated: "2026-06-25T14:56:16.244873205-05:00"
+generated: "2026-06-27T14:13:02.872992497-05:00"

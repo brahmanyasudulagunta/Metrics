@@ -50,7 +50,7 @@ Before pushing to GitHub, it is highly recommended to verify your changes work i
 ```bash
 # Update local dependencies and deploy the new images
 helm dependency update ./charts
-helm upgrade --install metrics ./charts -n metrics
+  helm upgrade --install metrics ./charts -n metrics
 ```
 *Verify everything is running successfully: `kubectl get pods -n metrics`*
 

@@ -3,7 +3,6 @@ import {
     Typography, Paper, Box, Divider, List, ListItem, ListItemText, 
     Switch, ListItemSecondaryAction
 } from '@mui/material';
-import AlertSettings from './AlertSettings';
 
 const Settings: React.FC = () => {
     return (
@@ -31,8 +30,6 @@ const Settings: React.FC = () => {
                 </List>
             </Paper>
 
-            <Typography variant="subtitle2" sx={{ mb: 2 }}>Alerting</Typography>
-            <AlertSettings />
         </Box>
     );
 };

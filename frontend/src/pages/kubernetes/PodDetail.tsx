@@ -43,6 +43,33 @@ const getStatusColor = (status: string) => {
     return tokens.text.muted;
 };
 
+const renderLogs = (rawLogs: string) => {
+    let text = rawLogs;
+    if (text.startsWith("b'") && text.endsWith("'")) {
+        text = text.substring(2, text.length - 1);
+    }
+    text = text.replace(/\\n/g, '\n');
+    
+    return text.split('\n').map((line, idx) => {
+        let color = tokens.text.secondary;
+        if (line.includes('INFO')) color = tokens.accent.blue;
+        if (line.includes('WARN')) color = tokens.accent.yellow;
+        if (line.includes('ERROR') || line.includes('FATAL') || line.includes('CRITICAL')) color = tokens.accent.red;
+        if (line.includes('DEBUG')) color = tokens.text.muted;
+        
+        return (
+            <Box key={idx} sx={{ display: 'flex', gap: 2, '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' }, px: 1, borderRadius: 1 }}>
+                <Typography sx={{ fontFamily: 'monospace', fontSize: '0.8rem', color: tokens.text.muted, userSelect: 'none', minWidth: 30, textAlign: 'right' }}>
+                    {idx + 1}
+                </Typography>
+                <Typography sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                    {line}
+                </Typography>
+            </Box>
+        );
+    });
+};
+
 const PodDetail: React.FC = () => {
     const { namespace, name } = useParams<{ namespace: string, name: string }>();
     const navigate = useNavigate();
@@ -307,7 +334,7 @@ const PodDetail: React.FC = () => {
                             {loading && !logs ? (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress size={24} /></Box>
                             ) : (
-                                logs
+                                renderLogs(logs)
                             )}
                         </Box>
                     </Paper>

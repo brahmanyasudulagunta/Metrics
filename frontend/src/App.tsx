@@ -9,6 +9,7 @@ import Explore from './pages/Explorer';
 import Kubernetes from './pages/kubernetes';
 import PodDetail from './pages/kubernetes/PodDetail';
 import Optimization from './pages/Optimization';
+import AlertSettings from './pages/AlertSettings';
 import Settings from './pages/Settings';
 import { getTheme } from './theme';
 import axios from 'axios';
@@ -56,6 +57,7 @@ const App: React.FC = () => {
               <Route path="kubernetes" element={<Kubernetes />} />
               <Route path="kubernetes/:namespace/:name" element={<PodDetail />} />
               <Route path="optimization" element={<Optimization />} />
+              <Route path="alerts" element={<AlertSettings />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 
